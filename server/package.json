@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "websocket": "latest",
+    "express": "latest"
+  }
+}

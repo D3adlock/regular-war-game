@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+  	"gulp-cli":"*",
+    "gulp": "*",
+    "gulp-watch": "*",
+    "gulp-shell": "*"
+  }
+}
