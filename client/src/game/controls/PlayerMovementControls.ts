@@ -130,6 +130,7 @@ module Rwg {
                 team: this.team,
                 fightType: this.fightType
             });
+            this.updatePlayerPosition(x,y);
         }
 
         private sendUpdatePlayerVelocity(x:number, y:number) {
@@ -145,6 +146,7 @@ module Rwg {
                 team: this.team,
                 fightType: this.fightType
             });
+            this.updatePlayerVelocity(x,y, this.x, this.y);
         }
     }
 }

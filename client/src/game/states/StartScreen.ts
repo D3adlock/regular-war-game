@@ -17,6 +17,7 @@ module Rwg {
 
         preload() {
             this.game.load.spritesheet('sword', '../assets/sword.png', 49, 27, 5);
+            this.game.load.spritesheet('arrow', '../assets/arrow.png', 32, 10, 1);
             this.game.load.spritesheet('swordFighter', '../assets/swordFighter.png', 32, 48, 16);
             this.game.load.spritesheet('meleeType', '../assets/melee.png',200,200);
             this.game.load.spritesheet('rangedType', '../assets/ranged.png',200,200);
@@ -141,7 +142,7 @@ module Rwg {
         }
 
         private submit() {
-            if (this.textInput.text != '' && this.team != undefined && this.fightType != undefined) {
+            if (this.textInput.text != '' && this.team != undefined) {
                 this.game.ws.send(
                 {
                     type: 'requestEnter',

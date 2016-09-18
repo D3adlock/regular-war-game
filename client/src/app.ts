@@ -3,7 +3,7 @@
 
 window.onload = () => {
 
-	var ws = new Rwg.WSConnection('ws://201.214.74.5:1337');
+	var ws = new Rwg.WSConnection('ws://localhost:1337');
 	ws.connect();
 	
     var game = new Rwg.Game(ws);

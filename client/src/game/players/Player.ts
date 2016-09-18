@@ -2,51 +2,86 @@ module Rwg {
 
     export class Player extends Phaser.Sprite {
 
-        private playerNameLabel:any;
+        public playerNameLabel:any;
         private color:string;
         public playerId:string;
         public team: number;
 
-        public fightType: string;
-        private weapon:any;
+        // attacks and skill sets
+        private activeAttack:any;
+        private skills: any;
+        private attacks: any;
 
-        public FacePositions: any;
+        // control related values
+        public defaultLeftClickAction: any;
+        public currentLeftClickAction: any;
         public updateMethods: any;
-
-        // properties that make sence only for the userPlayer
         public keyDownInputMethods: any;
         public keyUpInputMethods: any;
         private keyStack: any;
 
+        // this values should be put in a better place
+        public FacePositionsValues: any;
+        public targetElipse: any;
+        public fightType: string;
+
         constructor(game: Phaser.Game, x: number, y: number) {
             super(game, x, y, 'swordFighter');
-
-            // initializing the object
+            // visual sprite options
             this.anchor.setTo(0.5, 0.5);
             this.scale.setTo(1.5, 1.5);
             this.game.add.existing(this);
-            this.weapon = this.game.add.physicsGroup();
-            this.createWalkAnimations();
-            this.FacePositions = {LEFT:1,RIGHT:2,UP:3,DOWN:4}
-            // playerlabelname
-            var style = { font: "16px Arial", fill: "#ffffff", wordWrap: true, align: "center"};
-            this.playerNameLabel = this.game.add.text(x, y, '', style);
-            this.playerNameLabel.anchor.set(0.5,2.3);
-            this.playerNameLabel.position = this.position;
 
-            //methods ment to be run in the update() code block
-            this.updateMethods = {}
-            this.updateMethods['hitTheUserPlayer'] = function() {
-                this.game.physics.arcade.overlap(this.weapon, this.game.userPlayer, this.hitUserPlayer, this.userPlayerIsInMyTeam, this);
-            }.bind(this);
-            this.updateMethods['hitAFoePlayer'] = function() {
-                this.game.physics.arcade.overlap(this.weapon, this.game.foePlayers, this.hitAFoe, this.hitMyselfCheck, this);
-            }.bind(this);
+            // init attack and skill sets
+            this.activeAttack = this.game.add.physicsGroup();
+            this.skills = {};
+            this.attacks = {};
 
-            // hash of methods that are meant to run when keyboard is up or down
+            // init movement and click control values
+            this.defaultLeftClickAction = null;
+            this.currentLeftClickAction = null;
             this.keyDownInputMethods = {};
             this.keyUpInputMethods = {};
             this.keyStack = [];
+            this.updateMethods = {}
+            this.updateMethods['hitTheUserPlayer'] = function() {
+                this.game.physics.arcade.overlap(this.activeAttack, this.game.userPlayer, this.hitUserPlayer, this.userPlayerIsInMyTeam, this);
+            }.bind(this);
+            this.updateMethods['hitAFoePlayer'] = function() {
+                this.game.physics.arcade.overlap(this.activeAttack, this.game.foePlayers, this.hitAFoe, this.hitMyselfCheck, this);
+            }.bind(this);
+            this.updateMethods['mapLimits'] = function() {
+                if(this.y < 150) {
+                    this.y  = 150;
+                }
+            }.bind(this);
+
+
+            /*
+             * visual configuration
+             */
+
+            this.createWalkAnimations();
+            this.FacePositions = {LEFT:1,RIGHT:2,UP:3,DOWN:4}
+
+            // playerlabelname
+            var style = { font: "16px Arial", fill: "#ffffff", wordWrap: true, align: "center"};
+            this.playerNameLabel = this.game.add.text(x, y, '', style);
+            this.playerNameLabel.anchor.set(0.5,1.6);
+            this.playerNameLabel.position = this.position;
+
+
+            // methods for drawing the target circle in the player
+            this.targetElipse = this.game.add.graphics(this.x, this.y);
+
+            if (this.team == this.game.team) {
+                this.targetElipse.lineStyle(2, 0x00ff00);
+            } else {
+                this.targetElipse.lineStyle(2, 0xff0000);
+            }
+            this.targetElipse.drawEllipse(0, 18, 40, 25);
+            this.targetElipse.position = this.position;
+            this.targetElipse.visible = false;
         }
 
         /*
@@ -101,6 +136,25 @@ module Rwg {
             this.destroy();
         }
 
+        private stopMovement() {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+            this.MovemenrtControlEnable = false;
+        }
+
+        private continueMovement(){
+            this.MovemenrtControlEnable = true;
+            if (this.keyStack.length != 0) {
+                this.setVelocityForKey(this.keyStack[this.keyStack.length-1]);
+            }
+        }
+
+        /*
+         *
+         *  SETTERS
+         *
+         */
+
         public setColor(color:string) {
             this.color = color;
             this.tint = color;
@@ -111,11 +165,30 @@ module Rwg {
             this.playerNameLabel.text = 'Team-' + this.team + ': ' + playerId;
         }
 
-        private hitMyselfCheck(weaponFromColision: any, foePlayer: any) {
-            return this.playerId != foePlayer.playerId;
+
+        /*
+         *
+         *  HIT DETECTION METHODS
+         *
+         */
+
+        private hitUserPlayer(userPlayer, hitArea) {
+            userPlayer.takeHit(this.attacks[hitArea.attackName].damage, this.playerId);
+            if (this.attacks[hitArea.attackName].additionalEffect != null) {
+                this.attacks[hitArea.attackName].additionalEffect(userPlayer);
+            }
+            hitArea.kill();
         }
 
-        private userPlayerIsInMyTeam(userPlayer: any, weaponFromColision: any) {
+        private hitAFoe(hitArea, foePlayer) {
+            hitArea.kill();
+        }
+
+        private hitMyselfCheck(myAttack: any, attackedPlayer: any) {
+            return this.playerId != attackedPlayer.playerId;
+        }
+
+        private userPlayerIsInMyTeam(userPlayer: any, myAttack: any) {
             return this.team != userPlayer.team;
         }
 
@@ -193,25 +266,6 @@ module Rwg {
                 return this.FacePositions.RIGHT;
             } else if(horizontalDiff < 0 && Math.abs(horizontalDiff) == Math.abs(verticalDiff)) {
                 return this.FacePositions.LEFT;
-            }
-        }
-
-        /*
-         * NULL METHODS FOR FILLING
-         */
-
-        private stopMovement(x: number, y: number){
-            this.x = x;
-            this.y = y;
-            this.body.velocity.x = 0;
-            this.body.velocity.y = 0;
-            this.MovemenrtControlEnable = false;
-        }
-
-        private continueMovement(){
-            this.MovemenrtControlEnable = true;
-            if (this.keyStack.length != 0) {
-                this.setVelocityForKey(this.keyStack[this.keyStack.length-1]);
             }
         }
     }

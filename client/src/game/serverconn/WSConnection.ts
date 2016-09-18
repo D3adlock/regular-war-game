@@ -4,8 +4,14 @@ module Rwg {
 		private conn: any;
 		private uri: string;
 
+		// debug info
+		public messagesByteDataSend: number;
+		public messagesByteDataReceived: number;
+
 		constructor(uri: string) {
 			this.uri = uri;
+			this.messagesByteDataSend = 0;
+			this.messagesByteDataReceived = 0;
 		}
 
 		public connect() {
@@ -14,9 +20,8 @@ module Rwg {
 		}
 
 		public onMessage(message: any) {
-
+			this.messagesByteDataReceived += this.lengthInUtf8Bytes(message.data);
 			let message = JSON.parse(message.data);
-			this.debug(message);
 			switch(message.type) {
 			    case 'init':
 			        this.init(message);
@@ -79,6 +84,13 @@ module Rwg {
 		public send(message: any) {
 			let message = JSON.stringify(message)
             this.conn.send(message);
+            this.messagesByteDataSend += this.lengthInUtf8Bytes(message);
 		}
+
+        public lengthInUtf8Bytes(str) {
+          // Matches only the 10.. bytes that are non-initial characters in a multi-byte sequence.
+          var m = encodeURIComponent(str).match(/%[89ABab]/g);
+          return str.length + (m ? m.length : 0);
+        }
 	}
 }

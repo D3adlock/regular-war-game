@@ -14,6 +14,8 @@ module Rwg {
         }
 
         create() {
+            this.game.stage.disableVisibilityChange = true;
+
             // scenario setings
             this.game.world.setBounds(0, 0, 1920, 1920);
             this.background = this.game.add.tileSprite(0, 0, 1920, 1920, 'background');
@@ -34,13 +36,11 @@ module Rwg {
             this.game.camera.follow(this.game.userPlayer);
 
             // for debugin
-            this.servermessages=0;
-            this.game.ws.debug = this.debug.bind(this);
+            this.gameTime = 0;
         }
 
         public updatePlayerPosition(message: any) {
             if (message.playerId == this.game.userPlayer.playerId) {
-                this.game.userPlayer.updatePlayerPosition(message.x, message.y);
                 return;
             }
             let player = this.getPlayer(message);
@@ -54,7 +54,6 @@ module Rwg {
 
         public updatePlayerVelocity(message: any) {
             if (message.playerId == this.game.userPlayer.playerId) {
-                this.game.userPlayer.updatePlayerVelocity(message.velocityX, message.velocityY, message.x, message.y);
                 return;
             }
             let player = this.getPlayer(message);
@@ -80,11 +79,10 @@ module Rwg {
         // if recieves attack message from server perform the attack
         public attack(message: any) {
             if (message.playerId == this.game.userPlayer.playerId) {
-                this.game.userPlayer.attack(message);
                 return;
             }
             let player = this.getPlayer(message);
-            if (player !== null) { player.attack(message); }
+            if (player !== null) { player.attacks[message.attackName].attack(message); }
         }
         // if recieves player leave from server updates the player list
         public removePlayer(message: any) {
@@ -95,8 +93,20 @@ module Rwg {
             }
         }
 
-        public debug(){
-            this.game.debug.text('server messages : ' + this.servermessages++, 32, 128);
+        /*
+         * 
+         * Debug methods
+         *
+         */
+
+        update() {
+            if (this.game.time.now  > this.gameTime) {
+                this.game.debug.text('download : ' + this.game.ws.messagesByteDataReceived/1000 +' (Kb/s)' , 32, 128);
+                this.game.debug.text('upload : ' + this.game.ws.messagesByteDataSend/1000 + " (Kb/s)", 32, 148);
+                this.game.ws.messagesByteDataReceived = 0;
+                this.game.ws.messagesByteDataSend = 0;
+                this.gameTime = this.game.time.now + 1000;
+            }
         }
 
         /*
@@ -117,13 +127,35 @@ module Rwg {
 
         private reorderWeaponSprites() {
             this.background.sendToBack();
+            
+            this.game.foePlayers.forEach (
+                function(member) { 
+                    this.game.world.bringToTop(member.targetElipse);
+                }
+            , this, true);
+
+            this.game.foePlayers.forEach (
+                function(member) { 
+                    this.game.world.bringToTop(member.key);
+                }
+            , this, true);
+
             this.game.world.bringToTop(this.game.userPlayer);
-            this.game.foePlayers.forEach(
+
+            this.game.foePlayers.forEach (
                 function(member) { 
                     if(member.weaponSprite != null) {this.game.world.bringToTop(member.weaponSprite);}
                 }
             , this, true);
+            
             if(this.game.userPlayer.weaponSprite != null) {this.game.world.bringToTop(this.game.userPlayer.weaponSprite);}
+            
+            this.game.foePlayers.forEach (
+                function(member) { 
+                    this.game.world.bringToTop(member.playerNameLabel);
+                }
+            , this, true);
+
             this.game.world.bringToTop(this.game.userPlayer.uiMask);
         }
     }
