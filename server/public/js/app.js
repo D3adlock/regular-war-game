@@ -11,9 +11,9 @@ var Rwg;
             _super.apply(this, arguments);
         }
         StartScreen.prototype.preload = function () {
-            this.game.load.spritesheet('sword', '../assets/sword.png', 49, 27, 5);
+            this.game.load.atlas('link', '../assets/link.png', '../assets/link.json');
             this.game.load.spritesheet('arrow', '../assets/arrow.png', 32, 10, 1);
-            this.game.load.spritesheet('swordFighter', '../assets/swordFighter.png', 32, 48, 16);
+            this.game.load.spritesheet('target', '../assets/target.png', 48, 48, 1);
             this.game.load.spritesheet('meleeType', '../assets/melee.png', 200, 200);
             this.game.load.spritesheet('rangedType', '../assets/ranged.png', 200, 200);
             this.game.load.image('background', '../assets/debug-grid-1920x1920.png');
@@ -159,21 +159,16 @@ var Rwg;
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player(game, x, y) {
-            _super.call(this, game, x, y, 'swordFighter');
-            // visual sprite options
+            _super.call(this, game, x, y, 'link');
+            this.frameName = 'standDown.png';
             this.anchor.setTo(0.5, 0.5);
-            this.scale.setTo(1.5, 1.5);
+            this.scale.setTo(2, 2);
             this.game.add.existing(this);
             // init attack and skill sets
             this.activeAttack = this.game.add.physicsGroup();
             this.skills = {};
             this.attacks = {};
-            // init movement and click control values
-            this.defaultLeftClickAction = null;
-            this.currentLeftClickAction = null;
-            this.keyDownInputMethods = {};
-            this.keyUpInputMethods = {};
-            this.keyStack = [];
+            // update methods for checking hits
             this.updateMethods = {};
             this.updateMethods['hitTheUserPlayer'] = function () {
                 this.game.physics.arcade.overlap(this.activeAttack, this.game.userPlayer, this.hitUserPlayer, this.userPlayerIsInMyTeam, this);
@@ -187,7 +182,7 @@ var Rwg;
                 }
             }.bind(this);
             /*
-             * visual configuration
+             * stetic stuff
              */
             this.createWalkAnimations();
             this.FacePositions = { LEFT: 1, RIGHT: 2, UP: 3, DOWN: 4 };
@@ -197,35 +192,14 @@ var Rwg;
             this.playerNameLabel.anchor.set(0.5, 1.6);
             this.playerNameLabel.position = this.position;
             // methods for drawing the target circle in the player
-            this.targetElipse = this.game.add.graphics(this.x, this.y);
-            if (this.team == this.game.team) {
-                this.targetElipse.lineStyle(2, 0x00ff00);
-            }
-            else {
-                this.targetElipse.lineStyle(2, 0xff0000);
-            }
-            this.targetElipse.drawEllipse(0, 18, 40, 25);
-            this.targetElipse.position = this.position;
-            this.targetElipse.visible = false;
+            this.target = this.game.add.sprite(this.x, this.y, 'target');
+            this.target.position = this.position;
+            this.target.visible = false;
+            this.target.anchor.set(0.5, 0.5);
         }
-        /*
-         *
-         * DINAMIC CALLBACKS METHODS
-         *
-         */
         Player.prototype.update = function () {
             for (var key in this.updateMethods) {
                 this.updateMethods[key]();
-            }
-        };
-        Player.prototype.keyDownCallBack = function (event) {
-            for (var key in this.keyDownInputMethods) {
-                this.keyDownInputMethods[key](event);
-            }
-        };
-        Player.prototype.keyUpCallBack = function (event) {
-            for (var key in this.keyUpInputMethods) {
-                this.keyUpInputMethods[key](event);
             }
         };
         /*
@@ -259,12 +233,6 @@ var Rwg;
             this.body.velocity.y = 0;
             this.MovemenrtControlEnable = false;
         };
-        Player.prototype.continueMovement = function () {
-            this.MovemenrtControlEnable = true;
-            if (this.keyStack.length != 0) {
-                this.setVelocityForKey(this.keyStack[this.keyStack.length - 1]);
-            }
-        };
         /*
          *
          *  SETTERS
@@ -297,7 +265,7 @@ var Rwg;
             return this.playerId != attackedPlayer.playerId;
         };
         Player.prototype.userPlayerIsInMyTeam = function (userPlayer, myAttack) {
-            return this.team != userPlayer.team;
+            return (this.team != userPlayer.team);
         };
         /*
          *
@@ -305,10 +273,20 @@ var Rwg;
          *
          */
         Player.prototype.createWalkAnimations = function () {
-            var rightWalkAnimation = this.animations.add('rightWalkAnimation', [8, 9, 10, 11], 15, true);
-            var leftWalkAnimation = this.animations.add('leftWalkAnimation', [4, 5, 6, 7], 15, true);
-            var downWalkAnimation = this.animations.add('downWalkAnimation', [0, 1, 2, 3], 15, true);
-            var upWalkAnimation = this.animations.add('upWalkAnimation', [12, 13, 14, 15], 15, true);
+            var rightWalkFrames = [];
+            var leftWalkFrames = [];
+            var upWalkFrames = [];
+            var downWalkFrames = [];
+            for (var i = 0; i < 6; i++) {
+                rightWalkFrames.push('walkRight' + (i + 1) + '.png');
+                leftWalkFrames.push('walkLeft' + (i + 1) + '.png');
+                upWalkFrames.push('walkUp' + (i + 1) + '.png');
+                downWalkFrames.push('walkDown' + (i + 1) + '.png');
+            }
+            var rightWalkAnimation = this.animations.add('rightWalkAnimation', rightWalkFrames, 16, true);
+            var leftWalkAnimation = this.animations.add('leftWalkAnimation', leftWalkFrames, 16, true);
+            var downWalkAnimation = this.animations.add('downWalkAnimation', downWalkFrames, 16, true);
+            var upWalkAnimation = this.animations.add('upWalkAnimation', upWalkFrames, 16, true);
         };
         Player.prototype.startWalkAnimationBaseOnVelocity = function () {
             switch (this.getFacingBaseOnVelocity()) {
@@ -342,16 +320,16 @@ var Rwg;
         Player.prototype.changeSightPositionToPoint = function (x, y) {
             switch (this.getSightPositionToPoint(x, y)) {
                 case this.FacePositions.RIGHT:
-                    this.frame = 8;
+                    this.frameName = 'standRight.png';
                     break;
                 case this.FacePositions.LEFT:
-                    this.frame = 4;
+                    this.frameName = 'standLeft.png';
                     break;
                 case this.FacePositions.UP:
-                    this.frame = 12;
+                    this.frameName = 'standUp.png';
                     break;
                 case this.FacePositions.DOWN:
-                    this.frame = 0;
+                    this.frameName = 'standDown.png';
             }
         };
         Player.prototype.getSightPositionToPoint = function (x, y) {
@@ -374,6 +352,20 @@ var Rwg;
             }
             else if (horizontalDiff < 0 && Math.abs(horizontalDiff) == Math.abs(verticalDiff)) {
                 return this.FacePositions.LEFT;
+            }
+        };
+        Player.prototype.getPointsBaseOnFrame = function () {
+            if (/Right/.test(this.frameName)) {
+                return new Phaser.Point(this.x + 10, this.y);
+            }
+            if (/Left/.test(this.frameName)) {
+                return new Phaser.Point(this.x - 10, this.y);
+            }
+            if (/Up/.test(this.frameName)) {
+                return new Phaser.Point(this.x, this.y - 10);
+            }
+            if (/Down/.test(this.frameName)) {
+                return new Phaser.Point(this.x, this.y + 10);
             }
         };
         return Player;
@@ -403,10 +395,10 @@ var Rwg;
             }.bind(this);
             // skills target mechanics
             this.targetsOver = [];
-            this.maxTargetsSelected = 3;
+            this.maxTargetsSelected = 0;
             game.input.keyboard.removeKeyCapture([Phaser.KeyCode.ESC]);
             var esc = game.input.keyboard.addKey(Phaser.KeyCode.ESC);
-            esc.onDown.add(this.releaseTarget, this);
+            esc.onDown.add(this.releaseSkill, this);
             // UI display
             this.uiMask = this.game.add.graphics(0, 0);
             this.uiMask.beginFill(0x000000);
@@ -419,21 +411,46 @@ var Rwg;
             this.uiMask.addChild(this.scoreDisplay);
             // enables the keyboard inputs for the user player
             this.game.input.keyboard.addCallbacks(this, this.keyDownCallBack, this.keyUpCallBack, null);
+            // for attack control porpoises 
+            this.defaultLeftClickAction = null;
+            this.currentLeftClickAction = null;
+            this.lastActiveAttack = null;
+            this.activeTargetSkill = null;
+            this.keyDownInputMethods = {};
+            this.keyUpInputMethods = {};
+            this.keyStack = [];
         }
         // skills mechanics for player
         UserPlayer.prototype.targetOver = function (player) {
-            if (this.targetEnabled && this.targetsOver.length < this.maxTargetsSelected) {
-                this.targetsOver.push(player);
-                player.targetElipse.visible = true;
+            if (this.activeTargetSkill && this.targetsOver.length < this.maxTargetsSelected) {
+                if (this.activeTargetSkill.targetOnAlly) {
+                    if (player.team == this.team && !player.target.visible) {
+                        this.targetsOver.push(player);
+                        player.target.visible = true;
+                    }
+                }
+                else {
+                    if (player.team != this.team && !player.target.visible) {
+                        this.targetsOver.push(player);
+                        player.target.visible = true;
+                    }
+                }
             }
         };
-        UserPlayer.prototype.releaseTarget = function (player) {
-            for (var i = 0; i < this.targetsOver.length; i++) {
-                this.targetsOver[i].targetElipse.visible = false;
+        UserPlayer.prototype.releaseSkill = function () {
+            if (this.activeTargetSkill) {
+                for (var i = 0; i < this.targetsOver.length; i++) {
+                    this.targetsOver[i].target.visible = false;
+                }
+                this.targetsOver = [];
+                this.activeTargetSkill.casting = false;
+                this.activeTargetSkill = null;
+                // set back the last attack player was using
+                this.currentLeftClickAction = null;
+                setTimeout(function () {
+                    this.currentLeftClickAction = this.attacks[this.lastActiveAttack].triggerAttack;
+                }.bind(this), 500);
             }
-            this.targetsOver = [];
-            this.targetEnabled = false;
-            this.attackControlsEnabled = true;
         };
         UserPlayer.prototype.addTargetable = function (newPlayer) {
             newPlayer.events.onInputOver.add(this.targetOver, this);
@@ -460,6 +477,22 @@ var Rwg;
         UserPlayer.prototype.addAKill = function () {
             this.score++;
             this.scoreDisplay.text = 'Score : ' + this.score;
+        };
+        UserPlayer.prototype.continueMovement = function () {
+            this.MovemenrtControlEnable = true;
+            if (this.keyStack.length != 0) {
+                this.setVelocityForKey(this.keyStack[this.keyStack.length - 1]);
+            }
+        };
+        UserPlayer.prototype.keyDownCallBack = function (event) {
+            for (var key in this.keyDownInputMethods) {
+                this.keyDownInputMethods[key](event);
+            }
+        };
+        UserPlayer.prototype.keyUpCallBack = function (event) {
+            for (var key in this.keyUpInputMethods) {
+                this.keyUpInputMethods[key](event);
+            }
         };
         return UserPlayer;
     }(Rwg.Player));
@@ -610,76 +643,36 @@ var Rwg;
 /// <reference path="Player.ts" />
 var Rwg;
 (function (Rwg) {
-    var TargetSkill = (function () {
-        function TargetSkill(skillName, damage, range, castingSpeed, coolDown, castKey, maxTargetsSelected, effect) {
-            this.skillName = skillName;
-            this.damage = damage;
-            this.range = range;
-            this.castingSpeed = castingSpeed;
-            this.coolDown = coolDown;
-            this.castKey = castKey;
-            this.maxTargetsSelected = maxTargetsSelected;
-            this.effect = effect;
-        }
-        TargetSkill.prototype.provide = function (game, player) {
-            player.skills[this.skillName] = {};
-            player.skills[this.skillName].damage = this.damage;
-            player.skills[this.skillName].range = this.range;
-            player.skills[this.skillName].castingSpeed = this.castingSpeed;
-            player.skills[this.skillName].coolDown = this.coolDown;
-            player.skills[this.skillName].castKey = this.castKey;
-            player.skills[this.skillName].maxTargetsSelected = this.maxTargetsSelected;
-            player.skills[this.skillName].coolDownTime = 0;
-            var key = game.input.keyboard.addKey(this.castKey);
-            key.onDown.add(this.onKeyDownMethod(), player);
-            var effect = this.effect;
-            // the effect on player method
-            player.updateMethods[this.skillName + 'Fire'] = function () {
-                if (this.game.input.activePointer.leftButton.isDown && this.targetEnabled
-                    && this.targetsOver.length > 0) {
-                    effect(this.targetsOver);
-                    this.releaseTarget();
-                }
-            }.bind(player);
-        };
-        TargetSkill.prototype.onKeyDownMethod = function () {
-            var skillName = this.skillName;
-            return function (event) {
-                if (this.game.time.now > this.skills[skillName].coolDownTime) {
-                    // set the target values
-                    this.maxTargetsSelected = this.skills[skillName].maxTargetsSelected;
-                    this.targetsOver = [];
-                    this.targetEnabled = true;
-                    this.attackControlsEnabled = false;
-                    this.skills[skillName].coolDownTime = this.game.time.now + this.skills[skillName].coolDown;
-                }
-                else {
-                    console.log('skill not ready yet');
-                }
-            };
-        };
-        return TargetSkill;
-    }());
-    Rwg.TargetSkill = TargetSkill;
-})(Rwg || (Rwg = {}));
-/// <reference path="Player.ts" />
-var Rwg;
-(function (Rwg) {
     var PlayerAnimationFactory = (function () {
-        function PlayerAnimationFactory(animId, cancelMovement, upFrames, downFrames, leftFrames, rightFrames) {
-            this.animId = animId;
-            this.cancelMovement = cancelMovement;
-            this.upFrames = upFrames;
-            this.downFrames = downFrames;
-            this.leftFrames = leftFrames;
-            this.rightFrames = rightFrames;
+        function PlayerAnimationFactory() {
+            this.upFrames = [];
+            this.downFrames = [];
+            this.leftFrames = [];
+            this.rightFrames = [];
         }
         PlayerAnimationFactory.prototype.getPlayAnimationTowardsMethod = function (player, attackSpeed) {
+            if (this.singleAnimation) {
+                for (var i = 0; i < this.framesNumber; i++) {
+                    var frameName = this.animId + 'UpDownLeftRight' + (i + 1) + '.png';
+                    this.upFrames.push(frameName);
+                    this.downFrames.push(frameName);
+                    this.leftFrames.push(frameName);
+                    this.rightFrames.push(frameName);
+                }
+            }
+            else {
+                for (var i = 0; i < this.framesNumber; i++) {
+                    this.upFrames.push(this.animId + 'Up' + (i + 1) + '.png');
+                    this.downFrames.push(this.animId + 'Down' + (i + 1) + '.png');
+                    this.leftFrames.push(this.animId + 'Left' + (i + 1) + '.png');
+                    this.rightFrames.push(this.animId + 'Right' + (i + 1) + '.png');
+                }
+            }
+            this.createAnimation(player, attackSpeed, this.upFrames, this.animId + 'UpPlayerAnim', this.cancelMovement);
+            this.createAnimation(player, attackSpeed, this.downFrames, this.animId + 'DownPlayerAnim', this.cancelMovement);
+            this.createAnimation(player, attackSpeed, this.leftFrames, this.animId + 'LeftPlayerAnim', this.cancelMovement);
+            this.createAnimation(player, attackSpeed, this.rightFrames, this.animId + 'RightPlayerAnim', this.cancelMovement);
             var animId = this.animId;
-            this.createAnimation(player, attackSpeed, this.upFrames, animId + 'UpPlayerAnim', this.cancelMovement);
-            this.createAnimation(player, attackSpeed, this.downFrames, animId + 'DownPlayerAnim', this.cancelMovement);
-            this.createAnimation(player, attackSpeed, this.leftFrames, animId + 'LeftPlayerAnim', this.cancelMovement);
-            this.createAnimation(player, attackSpeed, this.rightFrames, animId + 'RightPlayerAnim', this.cancelMovement);
             return function (x, y) {
                 switch (this.getSightPositionToPoint(x, y)) {
                     case this.FacePositions.RIGHT:
@@ -702,7 +695,10 @@ var Rwg;
             // set cancel movement
             if (cancelMovement) {
                 anim.onComplete.add(function () {
-                    this.continueMovement();
+                    if (player.isUserPlayer) {
+                        this.continueMovement();
+                    }
+                    this.changeSightPositionToPoint(this.getPointsBaseOnFrame().x, this.getPointsBaseOnFrame().y);
                 }, player);
                 anim.onStart.add(function () {
                     this.stopMovement();
@@ -712,6 +708,109 @@ var Rwg;
         return PlayerAnimationFactory;
     }());
     Rwg.PlayerAnimationFactory = PlayerAnimationFactory;
+})(Rwg || (Rwg = {}));
+/// <reference path="Player.ts" />
+/// <reference path="../animations/PlayerAnimationFactory.ts" />
+var Rwg;
+(function (Rwg) {
+    var TargetSkill = (function () {
+        function TargetSkill() {
+        }
+        TargetSkill.prototype.provide = function (game, player) {
+            player.skills[this.skillName] = {};
+            player.skills[this.skillName].effect = this.effect.bind(player);
+            player.skills[this.skillName].skillThrown = this.getSkillThrownMethod(this.skillName).bind(player);
+            player.skills[this.skillName].castingSpeed = this.castingSpeed;
+            // range checks for targets
+            if (player.isUserPlayer) {
+                player.skills[this.skillName].skillTime = 0;
+                player.skills[this.skillName].range = this.range;
+                player.skills[this.skillName].coolDown = this.coolDown;
+                player.skills[this.skillName].castKey = this.castKey;
+                player.skills[this.skillName].maxTargetsSelected = this.maxTargetsSelected;
+                player.skills[this.skillName].casting = false;
+                player.skills[this.skillName].targetOnAlly = this.targetOnAlly;
+                var key = game.input.keyboard.addKey(this.castKey);
+                key.onDown.add(this.getSkillSelectedMethod(this.skillName), player);
+                player.skills[this.skillName].skillTrigger = this.getSkillTriggerMethod(this.skillName).bind(player);
+                player.updateMethods['checkRangeFor' + this.skillName] = this.getCheckRangeForSkillMethod(this.skillName).bind(player);
+            }
+            // casting animations
+            var animationFactory = new Rwg.PlayerAnimationFactory();
+            animationFactory.animId = this.skillName;
+            animationFactory.cancelMovement = true;
+            animationFactory.framesNumber = this.framesForTheAnimation;
+            animationFactory.singleAnimation = this.singleAnimation;
+            player.skills[this.skillName].playCastAnimationTowards =
+                animationFactory.getPlayAnimationTowardsMethod(player, player.skills[this.skillName].castingSpeed).bind(player);
+        };
+        TargetSkill.prototype.getSkillSelectedMethod = function (skillName) {
+            return function () {
+                if (this.activeTargetSkill != skillName) {
+                    if (this.game.time.now > this.skills[skillName].skillTime) {
+                        this.activeTargetSkill = this.skills[skillName];
+                        this.maxTargetsSelected = this.skills[skillName].maxTargetsSelected;
+                        this.targetsOver = [];
+                        // change the attack
+                        this.currentLeftClickAction = this.skills[skillName].skillTrigger;
+                    }
+                    else {
+                        console.log('skill not ready yet');
+                    }
+                }
+                else {
+                    console.log('skill already selected');
+                }
+            };
+        };
+        TargetSkill.prototype.getSkillThrownMethod = function (skillName) {
+            return function (message) {
+                this.skills[message.skillName].playCastAnimationTowards(this.getPointsBaseOnFrame().x, this.getPointsBaseOnFrame().y);
+                this.skills[message.skillName].casting = true;
+                this.game.time.events.add(this.skills[message.skillName].castingSpeed, function () {
+                    this.skills[message.skillName].effect(message.targets);
+                    if (this.isUserPlayer) {
+                        this.releaseSkill();
+                    }
+                }, this);
+            };
+        };
+        TargetSkill.prototype.getSkillTriggerMethod = function (skillName) {
+            return function () {
+                if (this.targetsOver.length > 0 && !this.skills[skillName].casting) {
+                    var targets = [];
+                    for (var i = 0; i < this.targetsOver.length; i++) {
+                        targets.push(this.targetsOver[i].playerId);
+                    }
+                    var message = {
+                        type: 'skillThrown',
+                        playerId: this.playerId,
+                        skillName: skillName,
+                        targets: targets
+                    };
+                    this.game.ws.send(message);
+                    this.skills[skillName].skillThrown(message);
+                    this.skills[skillName].skillTime = this.game.time.now + this.skills[skillName].coolDown;
+                }
+            };
+        };
+        TargetSkill.prototype.getCheckRangeForSkillMethod = function (skillName) {
+            return function () {
+                var newTargets = [];
+                for (var i = 0; i < this.targetsOver.length; i++) {
+                    if (Phaser.Point.distance(this.targetsOver[i].position, this.position) < this.skills[skillName].range) {
+                        newTargets.push(this.targetsOver[i]);
+                    }
+                    else {
+                        this.targetsOver[i].targetElipse.visible = false;
+                    }
+                }
+                this.targetsOver = newTargets;
+            };
+        };
+        return TargetSkill;
+    }());
+    Rwg.TargetSkill = TargetSkill;
 })(Rwg || (Rwg = {}));
 /// <reference path="Player.ts" />
 /// <reference path="../animations/PlayerAnimationFactory.ts" />
@@ -756,13 +855,18 @@ var Rwg;
             if (this.activeAttackKey == null) {
                 player.defaultLeftClickAction = player.attacks[this.attackName].triggerAttack.bind(player);
                 player.currentLeftClickAction = player.attacks[this.attackName].triggerAttack.bind(player);
+                player.activAction = this.attackName;
             }
             else {
                 var key = game.input.keyboard.addKey(this.activeAttackKey);
                 key.onDown.add(this.getAttackSelectedMethod(this.attackName), player);
             }
             // creates the animation method for this attack
-            var animationFactory = new Rwg.PlayerAnimationFactory(this.attackName, true, this.upFrames, this.downFrames, this.leftFrames, this.rightFrames);
+            var animationFactory = new Rwg.PlayerAnimationFactory();
+            animationFactory.animId = this.attackName;
+            animationFactory.cancelMovement = true;
+            animationFactory.framesNumber = this.framesForTheAnimation;
+            animationFactory.singleAnimation = this.singleAnimation;
             player.attacks[this.attackName].playAttackAnimationTowards =
                 animationFactory.getPlayAnimationTowardsMethod(player, this.attackSpeed).bind(player);
         };
@@ -816,6 +920,7 @@ var Rwg;
         MeleeAttack.prototype.getAttackSelectedMethod = function (attackName) {
             return function () {
                 this.currentLeftClickAction = this.attacks[attackName].triggerAttack;
+                this.lastActiveAttack = attackName;
             };
         };
         // creates the hit area bitmapdata
@@ -850,8 +955,6 @@ var Rwg;
             player.attacks[this.attackName].range = this.range;
             player.attacks[this.attackName].bulletSpeed = this.bulletSpeed;
             // generate the attack hit area sprites
-            // player.attacks[this.attackName].hitAreaSprites = game.add.physicsGroup();
-            // player.activeAttack.addChild(player.attacks[this.attackName].hitAreaSprites);
             for (var i = 0; i < this.cadence; i++) {
                 var bullet = player.activeAttack.create(0, 0, this.bulletSpriteName);
                 bullet.exists = false;
@@ -878,7 +981,11 @@ var Rwg;
                 key.onDown.add(this.getAttackSelectedMethod(this.attackName), player);
             }
             // creates the animation method for this attack
-            var animationFactory = new Rwg.PlayerAnimationFactory(this.attackName, true, this.upFrames, this.downFrames, this.leftFrames, this.rightFrames);
+            var animationFactory = new Rwg.PlayerAnimationFactory();
+            animationFactory.animId = this.attackName;
+            animationFactory.cancelMovement = true;
+            animationFactory.framesNumber = this.framesForTheAnimation;
+            animationFactory.singleAnimation = this.singleAnimation;
             player.attacks[this.attackName].playAttackAnimationTowards =
                 animationFactory.getPlayAnimationTowardsMethod(player, this.attackSpeed).bind(player);
         };
@@ -937,6 +1044,7 @@ var Rwg;
         RangedAttack.prototype.getAttackSelectedMethod = function (attackName) {
             return function () {
                 this.currentLeftClickAction = this.attacks[attackName].triggerAttack;
+                this.lastActiveAttack = attackName;
             };
         };
         return RangedAttack;
@@ -959,22 +1067,25 @@ var Rwg;
             game.userPlayer.setColor(data.color);
             game.userPlayer.setPlayerId(data.playerId);
             game.userPlayer.fightType = data.fightType;
+            game.userPlayer.isUserPlayer = true;
             // controlls
             (new Rwg.PlayerMovementControls(300)).provide(game.userPlayer);
-            // skills
-            // let targetSkill = new TargetSkill('test', 0, 100, 100, 2000, Phaser.KeyCode.E, 2, function(targets){console.log(targets)});
-            // targetSkill.provide(game, game.userPlayer);
             if (data.fightType == 'melee') {
                 PlayerFactory.allAttacks(game, game.userPlayer);
                 game.userPlayer.currentLeftClickAction = game.userPlayer.attacks['sword'].triggerAttack.bind(game.userPlayer);
+                game.userPlayer.defaultLeftClickAction = game.userPlayer.attacks['sword'].triggerAttack.bind(game.userPlayer);
+                game.userPlayer.lastActiveAttack = 'sword';
             }
             else if (data.fightType == 'ranged') {
                 PlayerFactory.allAttacks(game, game.userPlayer);
                 game.userPlayer.currentLeftClickAction = game.userPlayer.attacks['bow'].triggerAttack.bind(game.userPlayer);
+                game.userPlayer.defaultLeftClickAction = game.userPlayer.attacks['bow'].triggerAttack.bind(game.userPlayer);
+                game.userPlayer.lastActiveAttack = 'bow';
             }
         };
         PlayerFactory.createPlayer = function (game, data) {
             var newPlayer = new Rwg.Player(game, data.x, data.y);
+            newPlayer.isUserPlayer = false;
             newPlayer.team = data.team;
             newPlayer.setColor(data.color);
             newPlayer.setPlayerId(data.playerId);
@@ -993,17 +1104,15 @@ var Rwg;
             var melee = new Rwg.MeleeAttack();
             melee.attackName = 'sword';
             melee.damage = 20;
-            melee.range = 50;
+            melee.range = 25;
             melee.attackSpeed = 300;
             melee.coolDown = 800;
-            melee.hitAreaWidth = 30;
-            melee.hitAreaHeight = 100;
+            melee.hitAreaWidth = 10;
+            melee.hitAreaHeight = 70;
             melee.activeAttackKey = Phaser.KeyCode.Q;
-            melee.debug = true;
-            melee.upFrames = [0, 4, 8, 12];
-            melee.downFrames = [0, 4, 8, 12];
-            melee.leftFrames = [0, 4, 8, 12];
-            melee.rightFrames = [0, 4, 8, 12];
+            melee.debug = false;
+            melee.framesForTheAnimation = 5;
+            melee.singleAnimation = false;
             melee.provide(game, player);
             var ranged = new Rwg.RangedAttack();
             ranged.attackName = 'bow';
@@ -1017,11 +1126,23 @@ var Rwg;
             ranged.cadence = 2;
             ranged.bulletSpeed = 750;
             ranged.activeAttackKey = Phaser.KeyCode.E;
-            ranged.upFrames = [0, 4, 8, 12];
-            ranged.downFrames = [0, 4, 8, 12];
-            ranged.leftFrames = [0, 4, 8, 12];
-            ranged.rightFrames = [0, 4, 8, 12];
+            ranged.framesForTheAnimation = 3;
+            ranged.singleAnimation = false;
             ranged.provide(game, player);
+            //skills
+            var targetSkill = new Rwg.TargetSkill();
+            targetSkill.skillName = 'test';
+            targetSkill.damage = 0;
+            targetSkill.range = 500;
+            targetSkill.castingSpeed = 2000;
+            targetSkill.coolDown = 800;
+            targetSkill.castKey = Phaser.KeyCode.X;
+            targetSkill.maxTargetsSelected = 2;
+            targetSkill.framesForTheAnimation = 3;
+            targetSkill.singleAnimation = true;
+            targetSkill.targetOnAlly = false;
+            targetSkill.effect = function (targets) { console.log(targets); };
+            targetSkill.provide(game, player);
         };
         return PlayerFactory;
     }());
@@ -1084,6 +1205,7 @@ var Rwg;
             this.game.ws.attack = this.attack.bind(this);
             this.game.ws.playerKilled = this.playerKilled.bind(this);
             this.game.ws.removePlayer = this.removePlayer.bind(this);
+            this.game.ws.skillThrown = this.skillThrown.bind(this);
             // set the camara
             this.game.camera.follow(this.game.userPlayer);
             // for debugin
@@ -1131,14 +1253,23 @@ var Rwg;
                 return;
             }
             var player = this.getPlayer(message);
-            if (player !== null) {
+            if (player != null) {
                 player.attacks[message.attackName].attack(message);
+            }
+        };
+        Arena1.prototype.skillThrown = function (message) {
+            if (message.playerId == this.game.userPlayer.playerId) {
+                return;
+            }
+            var player = this.getPlayer(message);
+            if (player != null) {
+                player.skills[message.skillName].skillThrown(message);
             }
         };
         // if recieves player leave from server updates the player list
         Arena1.prototype.removePlayer = function (message) {
             var foe = this.game.foePlayers.getPlayerById(message.playerId);
-            if (foe !== null) {
+            if (foe != null) {
                 foe.destroyPlayer();
                 this.game.foePlayers.remove(foe);
             }
@@ -1175,7 +1306,7 @@ var Rwg;
         Arena1.prototype.reorderWeaponSprites = function () {
             this.background.sendToBack();
             this.game.foePlayers.forEach(function (member) {
-                this.game.world.bringToTop(member.targetElipse);
+                this.game.world.bringToTop(member.target);
             }, this, true);
             this.game.foePlayers.forEach(function (member) {
                 this.game.world.bringToTop(member.key);
@@ -1246,6 +1377,9 @@ var Rwg;
             this.debug = function (message) {
                 // empty method to be overwrite
             };
+            this.skillThrown = function (message) {
+                // empty method to be overwrite
+            };
             this.uri = uri;
             this.messagesByteDataSend = 0;
             this.messagesByteDataReceived = 0;
@@ -1278,6 +1412,9 @@ var Rwg;
                     break;
                 case 'playerKilled':
                     this.playerKilled(message);
+                    break;
+                case 'skillThrown':
+                    this.skillThrown(message);
                     break;
                 default:
                     console.log('no type');

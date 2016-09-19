@@ -31,6 +31,7 @@ module Rwg {
             this.game.ws.attack = this.attack.bind(this);
             this.game.ws.playerKilled = this.playerKilled.bind(this);
             this.game.ws.removePlayer = this.removePlayer.bind(this);
+            this.game.ws.skillThrown = this.skillThrown.bind(this);
 
             // set the camara
             this.game.camera.follow(this.game.userPlayer);
@@ -82,12 +83,22 @@ module Rwg {
                 return;
             }
             let player = this.getPlayer(message);
-            if (player !== null) { player.attacks[message.attackName].attack(message); }
+            if (player != null) { player.attacks[message.attackName].attack(message); }
         }
+
+        public skillThrown(message: any) {
+            if (message.playerId == this.game.userPlayer.playerId) {
+                return;
+            }
+
+            let player = this.getPlayer(message);
+            if (player != null) { player.skills[message.skillName].skillThrown(message);}
+        }
+
         // if recieves player leave from server updates the player list
         public removePlayer(message: any) {
             let foe = this.game.foePlayers.getPlayerById(message.playerId);
-            if (foe !== null) {
+            if (foe != null) {
                 foe.destroyPlayer();
                 this.game.foePlayers.remove(foe);
             }
@@ -130,7 +141,7 @@ module Rwg {
             
             this.game.foePlayers.forEach (
                 function(member) { 
-                    this.game.world.bringToTop(member.targetElipse);
+                    this.game.world.bringToTop(member.target);
                 }
             , this, true);
 

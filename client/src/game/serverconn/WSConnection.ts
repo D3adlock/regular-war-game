@@ -44,6 +44,9 @@ module Rwg {
 				case 'playerKilled':
 			        this.playerKilled(message);
 			        break;
+	        	case 'skillThrown':
+			        this.skillThrown(message);
+			        break;
 			    default:
 			        console.log('no type');
 			}
@@ -78,6 +81,10 @@ module Rwg {
 		}
 
 		public debug = function(message: any) {
+			// empty method to be overwrite
+		}
+
+		public skillThrown = function(message: any) {
 			// empty method to be overwrite
 		}
 

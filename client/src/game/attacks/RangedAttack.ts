@@ -15,11 +15,9 @@ module Rwg {
         public hitAreaHeight:number;
         public cadence:number;
         public bulletSpeed:number;
+        public singleAnimation:boolean;
 
-        public upFrames:any;
-        public downFrames:any;
-        public leftFrames:any;
-        public rightFrames:any;
+        public framesForTheAnimation;
 
         public provide(game: Phaser.Game, player: Player) {
 
@@ -33,8 +31,6 @@ module Rwg {
             player.attacks[this.attackName].bulletSpeed = this.bulletSpeed;
 
             // generate the attack hit area sprites
-            // player.attacks[this.attackName].hitAreaSprites = game.add.physicsGroup();
-            // player.activeAttack.addChild(player.attacks[this.attackName].hitAreaSprites);
             for (let i = 0; i < this.cadence; i++){
                 let bullet = player.activeAttack.create(0, 0, this.bulletSpriteName);
                 bullet.exists = false;
@@ -64,8 +60,12 @@ module Rwg {
             }
 
             // creates the animation method for this attack
-            let animationFactory = new PlayerAnimationFactory(this.attackName, true, this.upFrames,
-                this.downFrames, this.leftFrames, this.rightFrames);
+            let animationFactory = new PlayerAnimationFactory();
+            animationFactory.animId = this.attackName;
+            animationFactory.cancelMovement = true;
+            animationFactory.framesNumber = this.framesForTheAnimation;
+            animationFactory.singleAnimation = this.singleAnimation;
+
             player.attacks[this.attackName].playAttackAnimationTowards = 
                 animationFactory.getPlayAnimationTowardsMethod(player, this.attackSpeed).bind(player);
         }
@@ -138,6 +138,7 @@ module Rwg {
         private getAttackSelectedMethod(attackName:string) {
             return function() {
                 this.currentLeftClickAction = this.attacks[attackName].triggerAttack;
+                this.lastActiveAttack = attackName;
             }
         }
     }

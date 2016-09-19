@@ -12,11 +12,8 @@ module Rwg {
         public coolDown:number;
         public hitAreaWidth:number;
         public hitAreaHeight:number;
-
-        public upFrames:any;
-        public downFrames:any;
-        public leftFrames:any;
-        public rightFrames:any;
+        public framesForTheAnimation: number;
+        public singleAnimation: boolean;
 
         // optional
         private debug:boolean;
@@ -68,14 +65,19 @@ module Rwg {
             if (this.activeAttackKey == null) {
                 player.defaultLeftClickAction = player.attacks[this.attackName].triggerAttack.bind(player);
                 player.currentLeftClickAction = player.attacks[this.attackName].triggerAttack.bind(player);
+                player.activAction = this.attackName;
             } else {
                 let key = game.input.keyboard.addKey(this.activeAttackKey);
                 key.onDown.add(this.getAttackSelectedMethod(this.attackName), player);
             }
 
             // creates the animation method for this attack
-            let animationFactory = new PlayerAnimationFactory(this.attackName, true, this.upFrames,
-                this.downFrames, this.leftFrames, this.rightFrames);
+            let animationFactory = new PlayerAnimationFactory();
+            animationFactory.animId = this.attackName;
+            animationFactory.cancelMovement = true;
+            animationFactory.framesNumber = this.framesForTheAnimation;
+            animationFactory.singleAnimation = this.singleAnimation;
+
             player.attacks[this.attackName].playAttackAnimationTowards = 
                 animationFactory.getPlayAnimationTowardsMethod(player, this.attackSpeed).bind(player);
         }
@@ -142,6 +144,7 @@ module Rwg {
         private getAttackSelectedMethod(attackName:string) {
             return function() {
                 this.currentLeftClickAction = this.attacks[attackName].triggerAttack;
+                this.lastActiveAttack = attackName;
             }
         }
 

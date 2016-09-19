@@ -3,33 +3,22 @@ module Rwg {
     export class Player extends Phaser.Sprite {
 
         public playerNameLabel:any;
-        private color:string;
+        public color:string;
         public playerId:string;
-        public team: number;
-
-        // attacks and skill sets
+        public team:number;
         private activeAttack:any;
         private skills: any;
         private attacks: any;
-
-        // control related values
-        public defaultLeftClickAction: any;
-        public currentLeftClickAction: any;
         public updateMethods: any;
-        public keyDownInputMethods: any;
-        public keyUpInputMethods: any;
-        private keyStack: any;
-
-        // this values should be put in a better place
         public FacePositionsValues: any;
         public targetElipse: any;
         public fightType: string;
 
         constructor(game: Phaser.Game, x: number, y: number) {
-            super(game, x, y, 'swordFighter');
-            // visual sprite options
+            super(game, x, y, 'link');
+            this.frameName = 'standDown.png';
             this.anchor.setTo(0.5, 0.5);
-            this.scale.setTo(1.5, 1.5);
+            this.scale.setTo(2, 2);
             this.game.add.existing(this);
 
             // init attack and skill sets
@@ -37,12 +26,7 @@ module Rwg {
             this.skills = {};
             this.attacks = {};
 
-            // init movement and click control values
-            this.defaultLeftClickAction = null;
-            this.currentLeftClickAction = null;
-            this.keyDownInputMethods = {};
-            this.keyUpInputMethods = {};
-            this.keyStack = [];
+            // update methods for checking hits
             this.updateMethods = {}
             this.updateMethods['hitTheUserPlayer'] = function() {
                 this.game.physics.arcade.overlap(this.activeAttack, this.game.userPlayer, this.hitUserPlayer, this.userPlayerIsInMyTeam, this);
@@ -56,9 +40,8 @@ module Rwg {
                 }
             }.bind(this);
 
-
             /*
-             * visual configuration
+             * stetic stuff
              */
 
             this.createWalkAnimations();
@@ -70,39 +53,16 @@ module Rwg {
             this.playerNameLabel.anchor.set(0.5,1.6);
             this.playerNameLabel.position = this.position;
 
-
             // methods for drawing the target circle in the player
-            this.targetElipse = this.game.add.graphics(this.x, this.y);
-
-            if (this.team == this.game.team) {
-                this.targetElipse.lineStyle(2, 0x00ff00);
-            } else {
-                this.targetElipse.lineStyle(2, 0xff0000);
-            }
-            this.targetElipse.drawEllipse(0, 18, 40, 25);
-            this.targetElipse.position = this.position;
-            this.targetElipse.visible = false;
+            this.target = this.game.add.sprite(this.x, this.y, 'target');
+            this.target.position = this.position;
+            this.target.visible = false;
+            this.target.anchor.set(0.5,0.5);
         }
-
-        /*
-         *
-         * DINAMIC CALLBACKS METHODS
-         *
-         */
 
         update() {
             for (var key in this.updateMethods) {
                 this.updateMethods[key]();
-            }
-        }
-        private keyDownCallBack(event){
-            for (var key in this.keyDownInputMethods) {
-                this.keyDownInputMethods[key](event);
-            }
-        }
-        private keyUpCallBack(event){
-            for (var key in this.keyUpInputMethods) {
-                this.keyUpInputMethods[key](event);
             }
         }
 
@@ -140,13 +100,6 @@ module Rwg {
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
             this.MovemenrtControlEnable = false;
-        }
-
-        private continueMovement(){
-            this.MovemenrtControlEnable = true;
-            if (this.keyStack.length != 0) {
-                this.setVelocityForKey(this.keyStack[this.keyStack.length-1]);
-            }
         }
 
         /*
@@ -189,7 +142,7 @@ module Rwg {
         }
 
         private userPlayerIsInMyTeam(userPlayer: any, myAttack: any) {
-            return this.team != userPlayer.team;
+            return (this.team != userPlayer.team);
         }
 
         /*
@@ -199,10 +152,22 @@ module Rwg {
          */
 
         private createWalkAnimations() {
-            let rightWalkAnimation = this.animations.add('rightWalkAnimation', [8,9,10,11], 15, true);
-            let leftWalkAnimation = this.animations.add('leftWalkAnimation', [4,5,6,7], 15, true);
-            let downWalkAnimation = this.animations.add('downWalkAnimation', [0,1,2,3], 15, true);
-            let upWalkAnimation = this.animations.add('upWalkAnimation', [12,13,14,15], 15, true);
+            let rightWalkFrames = [];
+            let leftWalkFrames = [];
+            let upWalkFrames = [];
+            let downWalkFrames = [];
+
+            for (let i = 0; i < 6; i++) {
+                rightWalkFrames.push('walkRight'+(i+1)+'.png');
+                leftWalkFrames.push('walkLeft'+(i+1)+'.png');
+                upWalkFrames.push('walkUp'+(i+1)+'.png');
+                downWalkFrames.push('walkDown'+(i+1)+'.png');
+            }
+
+            let rightWalkAnimation = this.animations.add('rightWalkAnimation', rightWalkFrames, 16, true);
+            let leftWalkAnimation = this.animations.add('leftWalkAnimation', leftWalkFrames, 16, true);
+            let downWalkAnimation = this.animations.add('downWalkAnimation', downWalkFrames, 16, true);
+            let upWalkAnimation = this.animations.add('upWalkAnimation', upWalkFrames, 16, true);
         }
 
         private startWalkAnimationBaseOnVelocity(){
@@ -237,16 +202,16 @@ module Rwg {
 
             switch(this.getSightPositionToPoint(x,y)) {
                 case this.FacePositions.RIGHT:
-                    this.frame = 8;
+                    this.frameName = 'standRight.png';
                     break;
                 case this.FacePositions.LEFT:
-                    this.frame = 4;
+                    this.frameName = 'standLeft.png';
                     break;
                 case this.FacePositions.UP:
-                    this.frame = 12;
+                    this.frameName = 'standUp.png';
                     break;
                 case this.FacePositions.DOWN:
-                    this.frame = 0;
+                    this.frameName = 'standDown.png';
             }
         }
 
@@ -266,6 +231,25 @@ module Rwg {
                 return this.FacePositions.RIGHT;
             } else if(horizontalDiff < 0 && Math.abs(horizontalDiff) == Math.abs(verticalDiff)) {
                 return this.FacePositions.LEFT;
+            }
+        }
+
+        private getPointsBaseOnFrame() {
+
+            if (/Right/.test(this.frameName)) {
+                return new Phaser.Point(this.x + 10, this.y);
+            }
+
+            if (/Left/.test(this.frameName)) {
+                return new Phaser.Point(this.x - 10, this.y);
+            }
+
+            if (/Up/.test(this.frameName)) {
+                return new Phaser.Point(this.x, this.y - 10);
+            }
+
+            if (/Down/.test(this.frameName)) {
+                return new Phaser.Point(this.x, this.y + 10);
             }
         }
     }

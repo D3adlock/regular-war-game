@@ -6,13 +6,12 @@ module Rwg {
 
         public hitPoints: number;
         public score: number;
-
         private hipointsDisplay: any;
         private scoreDisplay: any;
         public uiMask: any;
-
         public targetOver: any;
         public maxTargetsSelected: number;
+        public activeTargetSkill: any;
 
         constructor(game: Phaser.Game, x: number, y: number) {
             super(game, x, y);
@@ -35,10 +34,10 @@ module Rwg {
 
             // skills target mechanics
             this.targetsOver = [];
-            this.maxTargetsSelected = 3;
+            this.maxTargetsSelected = 0;
             game.input.keyboard.removeKeyCapture([Phaser.KeyCode.ESC]);
             let esc = game.input.keyboard.addKey(Phaser.KeyCode.ESC);
-            esc.onDown.add(this.releaseTarget, this);
+            esc.onDown.add(this.releaseSkill, this);
 
             // UI display
             this.uiMask = this.game.add.graphics(0, 0);
@@ -55,23 +54,50 @@ module Rwg {
 
             // enables the keyboard inputs for the user player
             this.game.input.keyboard.addCallbacks(this, this.keyDownCallBack, this.keyUpCallBack, null);
+
+            // for attack control porpoises 
+            this.defaultLeftClickAction = null;
+            this.currentLeftClickAction = null;
+            this.lastActiveAttack = null;
+            this.activeTargetSkill = null;
+            this.keyDownInputMethods = {};
+            this.keyUpInputMethods = {};
+            this.keyStack = [];
         }
 
         // skills mechanics for player
         private targetOver(player) {
-            if (this.targetEnabled && this.targetsOver.length < this.maxTargetsSelected) {
-                this.targetsOver.push(player);
-                player.targetElipse.visible = true;
+            if (this.activeTargetSkill && this.targetsOver.length < this.maxTargetsSelected) {
+                if (this.activeTargetSkill.targetOnAlly) {
+                    if (player.team == this.team && !player.target.visible) {
+                        this.targetsOver.push(player);
+                        player.target.visible = true;
+                    }
+                } else {
+                    if (player.team != this.team && !player.target.visible) {
+                        this.targetsOver.push(player);
+                        player.target.visible = true;
+                    }
+                }
             }
         }
-        private releaseTarget(player) {
-            for (let i = 0; i < this.targetsOver.length; i++) {
-                this.targetsOver[i].targetElipse.visible = false;
+        private releaseSkill() {
+            if (this.activeTargetSkill) { 
+                for (let i = 0; i < this.targetsOver.length; i++) {
+                    this.targetsOver[i].target.visible = false;
+                }
+                this.targetsOver = [];
+                this.activeTargetSkill.casting = false;
+                this.activeTargetSkill = null;
+
+                // set back the last attack player was using
+                this.currentLeftClickAction = null;
+                setTimeout(function(){ 
+                    this.currentLeftClickAction = this.attacks[this.lastActiveAttack].triggerAttack;
+                }.bind(this), 500);
             }
-            this.targetsOver = [];
-            this.targetEnabled = false;
-            this.attackControlsEnabled = true;
         }
+
         private addTargetable(newPlayer:any) {
             newPlayer.events.onInputOver.add(this.targetOver, this);
             newPlayer.inputEnabled = true;
@@ -100,6 +126,24 @@ module Rwg {
         public addAKill() {
             this.score++;
             this.scoreDisplay.text = 'Score : ' + this.score;
+        }
+
+        private continueMovement(){
+            this.MovemenrtControlEnable = true;
+            if (this.keyStack.length != 0) {
+                this.setVelocityForKey(this.keyStack[this.keyStack.length-1]);
+            }
+        }
+
+        private keyDownCallBack(event){
+            for (var key in this.keyDownInputMethods) {
+                this.keyDownInputMethods[key](event);
+            }
+        }
+        private keyUpCallBack(event){
+            for (var key in this.keyUpInputMethods) {
+                this.keyUpInputMethods[key](event);
+            }
         }
     }
 }
