@@ -19,7 +19,7 @@ module Rwg {
 
         public framesForTheAnimation;
 
-        public provide(game: Phaser.Game, player: Player) {
+        public provide(game: Phaser.Game, player: Player, skillSlotIndex:number) {
 
             // create a new attack in the attack list
             player.attacks[this.attackName] = {};
@@ -68,6 +68,12 @@ module Rwg {
 
             player.attacks[this.attackName].playAttackAnimationTowards = 
                 animationFactory.getPlayAnimationTowardsMethod(player, this.attackSpeed).bind(player);
+
+            // skil slot
+            player.skillSlots[this.attackName] = new SkillSlot(game, player, skillSlotIndex);
+            player.skillSlots[this.attackName].iconName = this.attackName;
+            player.skillSlots[this.attackName].coolDown = this.coolDown;
+            player.skillSlots[this.attackName].render();
         }
 
         private getAttackMethod(attackName:string) {
@@ -103,6 +109,8 @@ module Rwg {
             return function() {
                 if (this.game.time.now > this.attacks[attackName].attackTime) {
                     
+                    this.skillSlots[attackName].use();
+
                     let message =  {
                         playerId: this.playerId,
                         attackName: attackName,
@@ -137,6 +145,7 @@ module Rwg {
 
         private getAttackSelectedMethod(attackName:string) {
             return function() {
+                this.skillSlots[attackName].mark();
                 this.currentLeftClickAction = this.attacks[attackName].triggerAttack;
                 this.lastActiveAttack = attackName;
             }

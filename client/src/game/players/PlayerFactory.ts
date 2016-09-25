@@ -1,6 +1,7 @@
 /// <reference path="UserPlayer.ts" />
 /// <reference path="../controls/PlayerMovementControls.ts" />
 /// <reference path="../skills/TargetSkill.ts" />
+/// <reference path="../skills/ClickOnMapSkill.ts" />
 /// <reference path="../attacks/MeleeAttack.ts" />
 /// <reference path="../attacks/RangedAttack.ts" />
 
@@ -44,8 +45,10 @@ module Rwg {
 
             if(newPlayer.team == game.userPlayer.team) {
                 game.allyPlayers.add(newPlayer);
+                newPlayer.setMiniLifeBar(true);
             } else {
                 game.foePlayers.add(newPlayer);
+                newPlayer.setMiniLifeBar(false);
             }
 
             PlayerFactory.allAttacks(game,newPlayer);
@@ -55,6 +58,7 @@ module Rwg {
         }
 
         public static allAttacks(game, player) {
+
             let melee = new MeleeAttack();
             melee.attackName = 'sword';
             melee.damage = 20;
@@ -67,7 +71,7 @@ module Rwg {
             melee.debug = false;
             melee.framesForTheAnimation = 5;
             melee.singleAnimation = false;
-            melee.provide(game, player);
+            melee.provide(game, player, 0);
 
             let ranged = new RangedAttack();
             ranged.attackName = 'bow';
@@ -83,12 +87,11 @@ module Rwg {
             ranged.activeAttackKey = Phaser.KeyCode.E;
             ranged.framesForTheAnimation = 3;
             ranged.singleAnimation = false;
-            ranged.provide(game, player);
+            ranged.provide(game, player, 1);
 
             //skills
             let targetSkill = new TargetSkill();
             targetSkill.skillName = 'test';
-            targetSkill.damage = 0;
             targetSkill.range = 500;
             targetSkill.castingSpeed = 2000;
             targetSkill.coolDown = 800;
@@ -98,8 +101,44 @@ module Rwg {
             targetSkill.singleAnimation = true;
             targetSkill.targetOnAlly = false;
             targetSkill.effect = function(targets) {console.log(targets);};
+            targetSkill.provide(game, player, 2);
 
-            targetSkill.provide(game, player);
+            let clickOnMapSkill = new ClickOnMapSkill();
+            clickOnMapSkill.skillName = 'jump';
+            clickOnMapSkill.range = 600;
+            clickOnMapSkill.castingSpeed = 300;
+            clickOnMapSkill.coolDown = 500;
+            clickOnMapSkill.castKey = Phaser.KeyCode.C;
+            clickOnMapSkill.framesForTheAnimation = 4;
+            clickOnMapSkill.singleAnimation = true;
+            clickOnMapSkill.velocitySpeed = 1200;
+
+            // example of a jump skill
+            clickOnMapSkill.effect = function(message) {
+                this.x = message.x;
+                this.y = message.y;
+
+                let origin = new Phaser.Point(message.x, message.y);
+                let target = new Phaser.Point(message.targetX, message.targetY);
+
+                let distanceToTarget = Phaser.Point.distance(origin,target);
+                let range = distanceToTarget;
+                if (distanceToTarget > message.range) {
+                    range = message.range;
+                }
+
+                this.game.physics.arcade.moveToXY(this, message.targetX, message.targetY, message.velocitySpeed);
+
+                this.updateMethods['checKJumpDistance'] = function() {
+                    if (Phaser.Point.distance(this.position,origin) > range) {
+                        this.body.velocity.x = 0;
+                        this.body.velocity.y = 0;
+                        delete this.updateMethods['checKJumpDistance'];
+                    }
+                }.bind(this);
+            };
+
+            clickOnMapSkill.provide(game, player, 3);
         }
     }
 }

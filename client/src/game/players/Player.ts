@@ -1,17 +1,19 @@
+/// <reference path="../ui/MiniLifeBar.ts" />
+
 module Rwg {
 
     export class Player extends Phaser.Sprite {
 
         public playerNameLabel:any;
-        public color:string;
         public playerId:string;
         public team:number;
         private activeAttack:any;
         private skills: any;
+        public skillSlots: any;
         private attacks: any;
         public updateMethods: any;
         public FacePositionsValues: any;
-        public targetElipse: any;
+
         public fightType: string;
 
         constructor(game: Phaser.Game, x: number, y: number) {
@@ -25,6 +27,7 @@ module Rwg {
             this.activeAttack = this.game.add.physicsGroup();
             this.skills = {};
             this.attacks = {};
+            this.skillSlots = {};
 
             // update methods for checking hits
             this.updateMethods = {}
@@ -34,11 +37,11 @@ module Rwg {
             this.updateMethods['hitAFoePlayer'] = function() {
                 this.game.physics.arcade.overlap(this.activeAttack, this.game.foePlayers, this.hitAFoe, this.hitMyselfCheck, this);
             }.bind(this);
-            this.updateMethods['mapLimits'] = function() {
-                if(this.y < 150) {
-                    this.y  = 150;
-                }
-            }.bind(this);
+            // this.updateMethods['mapLimits'] = function() {
+            //     if(this.y < 150) {
+            //         this.y  = 150;
+            //     }
+            // }.bind(this);
 
             /*
              * stetic stuff
@@ -46,12 +49,6 @@ module Rwg {
 
             this.createWalkAnimations();
             this.FacePositions = {LEFT:1,RIGHT:2,UP:3,DOWN:4}
-
-            // playerlabelname
-            var style = { font: "16px Arial", fill: "#ffffff", wordWrap: true, align: "center"};
-            this.playerNameLabel = this.game.add.text(x, y, '', style);
-            this.playerNameLabel.anchor.set(0.5,1.6);
-            this.playerNameLabel.position = this.position;
 
             // methods for drawing the target circle in the player
             this.target = this.game.add.sprite(this.x, this.y, 'target');
@@ -72,7 +69,11 @@ module Rwg {
          *
          */
 
-        public updatePlayerPosition(x: number, y: number) {
+        public recieveDamage(message) {
+            this.miniLifeBar.updateLifeBar(message.maxHp, message.hp);
+        } 
+
+        public updatePlayerPosition(x: number, y: number, hp:number, maxHp:number) {
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
             this.x = x;
@@ -83,7 +84,7 @@ module Rwg {
             this.animations.stop('upWalkAnimation', this.frame);
         }
 
-        private updatePlayerVelocity(velocityX:number, velocityY:number, x:number, y:number) {
+        private updatePlayerVelocity(velocityX:number, velocityY:number, x:number, y:number, hp:number, maxHp:number) {
             this.x = x;
             this.y = y;
             this.body.velocity.x = velocityX;
@@ -94,6 +95,7 @@ module Rwg {
         public destroyPlayer() {
             this.playerNameLabel.destroy();
             this.destroy();
+            this.miniLifeBar.mark.destroy();
         }
 
         private stopMovement() {
@@ -115,9 +117,17 @@ module Rwg {
 
         public setPlayerId(playerId:string) {
             this.playerId = playerId;
-            this.playerNameLabel.text = 'Team-' + this.team + ': ' + playerId;
+            var style = { font: "16px Arial", fill: "#ffffff", wordWrap: true, align: "center"};
+            this.playerNameLabel = this.game.add.text(0, 0, 'Team-' + this.team + ': ' + playerId, style);
+            this.playerNameLabel.anchor.set(0.5,1.4);
+            this.playerNameLabel.position = this.position;
         }
 
+        public setMiniLifeBar(ally:boolean) {
+            // minilife bar
+            this.miniLifeBar = new MiniLifeBar(this.game, ally);
+            this.miniLifeBar.setPosition(this.position);
+        }
 
         /*
          *

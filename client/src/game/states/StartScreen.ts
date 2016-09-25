@@ -19,6 +19,11 @@ module Rwg {
             this.game.load.atlas('link', '../assets/link.png', '../assets/link.json');
             this.game.load.spritesheet('arrow', '../assets/arrow.png', 32, 10, 1);
             this.game.load.spritesheet('target', '../assets/target.png', 48, 48, 1);
+
+            this.game.load.image('swordIcon', '../assets/sword.png', 50,50);
+            this.game.load.image('bowIcon', '../assets/bow.png', 50,50);
+            this.game.load.image('testIcon', '../assets/test.png', 50,50);
+            this.game.load.image('jumpIcon', '../assets/jump.png', 50,50);
             
             this.game.load.spritesheet('meleeType', '../assets/melee.png',200,200);
             this.game.load.spritesheet('rangedType', '../assets/ranged.png',200,200);
@@ -79,6 +84,8 @@ module Rwg {
 
             this.game.ws.init = this.initArena.bind(this);
             this.game.ws.requestEnter = this.requestEnter.bind(this);
+
+            //this.quickAdvance();
         }
 
         update(){
@@ -154,6 +161,16 @@ module Rwg {
             } else {
                 this.error.text = 'Write a playerName, select a team and a weapon!';
             }
+        }
+
+        private quickAdvance() {
+            this.game.ws.send(
+            {
+                type: 'requestEnter',
+                fightType: 'melee',
+                team: 1,
+                playerId: 'claudio'
+            });
         }
 
         private requestEnter(message: any) {

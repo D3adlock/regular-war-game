@@ -3,18 +3,18 @@
 
 module Rwg {
 
-    export class TargetSkill {
+    export class ClickOnMapSkill {
 
         public skillName:string;
         public range:number;
         public castingSpeed:number;
         public coolDown:number;
         public castKey: any;
-        public maxTargetsSelected: number;
         public effect: any;
+        public velocitySpeed:number;
+
         public singleAnimation: boolean;
         public framesForTheAnimation: number;
-        public targetOnAlly:boolean;
 
         public provide(game: Phaser.Game, player: Player, skillSlotIndex:number) {
 
@@ -24,20 +24,17 @@ module Rwg {
             player.skills[this.skillName].castingSpeed = this.castingSpeed;
             player.skills[this.skillName].skillName = this.skillName;
 
-            // range checks for targets
             if (player.isUserPlayer) {
                 player.skills[this.skillName].skillTime = 0;
                 player.skills[this.skillName].range = this.range;
                 player.skills[this.skillName].coolDown = this.coolDown;
                 player.skills[this.skillName].castKey = this.castKey;
-                player.skills[this.skillName].maxTargetsSelected = this.maxTargetsSelected;
                 player.skills[this.skillName].casting = false;
-                player.skills[this.skillName].targetOnAlly = this.targetOnAlly;
+                player.skills[this.skillName].velocitySpeed = this.velocitySpeed;
 
                 let key = game.input.keyboard.addKey(this.castKey);
                 key.onDown.add(this.getSkillSelectedMethod(this.skillName), player);
                 player.skills[this.skillName].skillTrigger = this.getSkillTriggerMethod(this.skillName).bind(player);
-                player.updateMethods['checkRangeFor'+this.skillName] = this.getCheckRangeForSkillMethod(this.skillName).bind(player);
             }
 
             // casting animations
@@ -58,29 +55,32 @@ module Rwg {
 
         private getSkillSelectedMethod(skillName:string) {
             return function() {
-                if (this.activeTargetSkill) {
-                     if (this.activeTargetSkill.skillName == skillName) {
+
+                if (this.activeClickOnMapSkill) {
+                    if (this.activeClickOnMapSkill.skillName == skillName) {
                         console.log('skill already selected');
                         return;
-                     }
+                    } 
                 }
-                   
+                    
                 if (this.game.time.now < this.skills[skillName].skillTime) {
                     console.log('skill not ready yet');
                     return;
-                }       
-                            
-                if (this.activeClickOnMapSkill != null) {
-                    this.activeClickOnMapSkill.casting = false;
-                    this.activeClickOnMapSkill = null;
                 }
 
-                this.activeTargetSkill = this.skills[skillName];
-                this.maxTargetsSelected = this.skills[skillName].maxTargetsSelected;
-                this.targetsOver = [];
-                // change the attack
-                this.currentLeftClickAction = this.skills[skillName].skillTrigger;
+                if (this.activeTargetSkill != null) {
+                    for (let i = 0; i < this.targetsOver.length; i++) {
+                        this.targetsOver[i].target.visible = false;
+                    }
+                    this.targetsOver = [];
+                    this.activeTargetSkill.casting = false;
+                    this.activeTargetSkill = null;
+                }
+
                 this.skillSlots[skillName].mark();
+
+                this.activeClickOnMapSkill = this.skills[skillName];
+                this.currentLeftClickAction = this.skills[skillName].skillTrigger;
             };
         }
 
@@ -90,50 +90,34 @@ module Rwg {
                     this.getPointsBaseOnFrame().y);
                 this.skills[message.skillName].casting = true;
 
-                this.game.time.events.add(this.skills[message.skillName].castingSpeed,
-                    function(){
-                        this.skills[message.skillName].effect(message.targets);
-                        if (this.isUserPlayer) {
-                            this.releaseTargetSkill();
-                        }
-                    }
-                ,this);
+                this.skills[message.skillName].effect(message);
+                if (this.isUserPlayer) {
+                    this.releaseClickOnMapSkill();
+                }
             }
         }
 
         private getSkillTriggerMethod(skillName:string) {
             return function() {
-                if (this.targetsOver.length > 0 && !this.skills[skillName].casting) {
-                    let targets = [];
-                    for (let i=0; i < this.targetsOver.length; i++) {
-                        targets.push(this.targetsOver[i].playerId);
-                    }
+                if (!this.skills[skillName].casting) {
                     let message = {
                         type: 'skillThrown',
                         playerId: this.playerId,
                         skillName: skillName,
-                        targets: targets
+                        x: this.x,
+                        y: this.y,
+                        targetX: this.game.input.worldX,
+                        targetY: this.game.input.worldY,
+                        range: this.skills[skillName].range,
+                        velocitySpeed: this.skills[skillName].velocitySpeed
                     }
+
                     this.game.ws.send(message);
                     this.skills[skillName].skillThrown(message);
                     this.skills[skillName].skillTime = this.game.time.now + this.skills[skillName].coolDown;
+
                     this.skillSlots[skillName].use();
                 }
-            }
-        }
-
-        private getCheckRangeForSkillMethod(skillName:string) {
-            return function() {
-                let newTargets = [];
-
-                for (let i = 0; i < this.targetsOver.length; i++) {
-                    if (Phaser.Point.distance(this.targetsOver[i].position, this.position) < this.skills[skillName].range) {
-                        newTargets.push(this.targetsOver[i]);
-                    } else {
-                        this.targetsOver[i].target.visible = false;
-                    }
-                }
-                this.targetsOver = newTargets;
             }
         }
     }

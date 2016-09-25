@@ -47,6 +47,9 @@ module Rwg {
 	        	case 'skillThrown':
 			        this.skillThrown(message);
 			        break;
+				case 'takeDamage':
+					this.takeDamage(message);
+					break;
 			    default:
 			        console.log('no type');
 			}
@@ -85,6 +88,9 @@ module Rwg {
 		}
 
 		public skillThrown = function(message: any) {
+			// empty method to be overwrite
+		}
+		public takeDamage = function(message: any) {
 			// empty method to be overwrite
 		}
 
