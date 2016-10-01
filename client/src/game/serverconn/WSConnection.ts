@@ -1,3 +1,5 @@
+/// <reference path="../core/enums/MessageType.ts" />
+
 module Rwg {
 	export class WSConnection {
 
@@ -23,14 +25,17 @@ module Rwg {
 			this.messagesByteDataReceived += this.lengthInUtf8Bytes(message.data);
 			let message = JSON.parse(message.data);
 			switch(message.type) {
-			    case 'init':
+			    case MessageType.INIT:
 			        this.init(message);
 			        break;
-				case 'updatePlayerVelocity':
-			        this.updatePlayerVelocity(message);
+			    case MessageType.NEW_PLAYER:
+			        this.newPlayer(message);
 			        break;
-				case 'updatePlayerPosition':
-			        this.updatePlayerPosition(message);
+				case MessageType.VELOCITY:
+			        this.velocity(message);
+			        break;
+				case MessageType.MOVE:
+			        this.move(message);
 			        break;
 				case 'removePlayer':
 			        this.removePlayer(message);
@@ -38,14 +43,14 @@ module Rwg {
 				case 'requestEnter':
 			        this.requestEnter(message);
 			        break;
-				case 'attack':
+				case MessageType.ATTACK:
 			        this.attack(message);
 			        break;
 				case 'playerKilled':
 			        this.playerKilled(message);
 			        break;
-	        	case 'skillThrown':
-			        this.skillThrown(message);
+	        	case MessageType.SKILL:
+			        this.skill(message);
 			        break;
 				case 'takeDamage':
 					this.takeDamage(message);
@@ -59,11 +64,15 @@ module Rwg {
 			// empty method to be overwrite
 		}
 
-		public updatePlayerPosition = function(message: any) {
+		public newPlayer = function(message: any) {
 			// empty method to be overwrite
 		}
 
-		public updatePlayerVelocity = function(message: any) {
+		public move = function(message: any) {
+			// empty method to be overwrite
+		}
+
+		public velocity = function(message: any) {
 			// empty method to be overwrite
 		}
 
@@ -87,7 +96,7 @@ module Rwg {
 			// empty method to be overwrite
 		}
 
-		public skillThrown = function(message: any) {
+		public skill = function(message: any) {
 			// empty method to be overwrite
 		}
 		public takeDamage = function(message: any) {
