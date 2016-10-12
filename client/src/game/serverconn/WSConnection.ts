@@ -1,3 +1,5 @@
+/// <reference path="../core/enums/MessageType.ts" />
+
 module Rwg {
 	export class WSConnection {
 
@@ -23,55 +25,72 @@ module Rwg {
 			this.messagesByteDataReceived += this.lengthInUtf8Bytes(message.data);
 			let message = JSON.parse(message.data);
 			switch(message.type) {
-			    case 'init':
-			        this.init(message);
+				case MessageType.NAME_SELECTION:
+					this.continueToCharSelection(message);
+					break;
+			    case MessageType.CHARACTER_SELECTION:
+			        this.continueToArenaSelection(message);
 			        break;
-				case 'updatePlayerVelocity':
-			        this.updatePlayerVelocity(message);
+			    case MessageType.ARENA_SELECTION:
+			        this.initArena(message);
 			        break;
-				case 'updatePlayerPosition':
-			        this.updatePlayerPosition(message);
+			    case MessageType.NEW_PLAYER:
+			        this.newPlayer(message);
 			        break;
-				case 'removePlayer':
-			        this.removePlayer(message);
+				case MessageType.VELOCITY:
+			        this.velocity(message);
 			        break;
-				case 'requestEnter':
-			        this.requestEnter(message);
+				case MessageType.MOVE:
+			        this.move(message);
 			        break;
-				case 'attack':
+				case MessageType.PLAYER_LEFT:
+			        this.playerLeft(message);
+			        break;
+				case MessageType.ATTACK:
 			        this.attack(message);
 			        break;
-				case 'playerKilled':
-			        this.playerKilled(message);
+				case MessageType.DAMAGE:
+			        this.damage(message);
 			        break;
-	        	case 'skillThrown':
-			        this.skillThrown(message);
+	        	case MessageType.SKILL:
+			        this.skill(message);
 			        break;
-				case 'takeDamage':
-					this.takeDamage(message);
-					break;
+	        	case MessageType.GAME_OVER:
+			        this.gameOver(message);
+			        break;
 			    default:
-			        console.log('no type');
+			        console.log('no type ' + message.type + " ---> ");
+			        for (key in message) {
+			        	console.log(key + " : " + message[key]);
+			        }
 			}
 		}
 
-		public init = function(message: any) {
+		public continueToCharSelection = function(message: any) {
 			// empty method to be overwrite
 		}
 
-		public updatePlayerPosition = function(message: any) {
+		public continueToArenaSelection = function(message: any) {
 			// empty method to be overwrite
 		}
 
-		public updatePlayerVelocity = function(message: any) {
+		public initArena = function(message: any) {
 			// empty method to be overwrite
 		}
 
-		public removePlayer = function(message: any) {
+		public newPlayer = function(message: any) {
 			// empty method to be overwrite
 		}
 
-		public requestEnter = function(message: any) {
+		public move = function(message: any) {
+			// empty method to be overwrite
+		}
+
+		public velocity = function(message: any) {
+			// empty method to be overwrite
+		}
+
+		public playerLeft = function(message: any) {
 			// empty method to be overwrite
 		}
 
@@ -79,18 +98,13 @@ module Rwg {
 			// empty method to be overwrite
 		}
 
-		public playerKilled = function(message: any) {
+		public skill = function(message: any) {
 			// empty method to be overwrite
 		}
-
-		public debug = function(message: any) {
+		public damage = function(message: any) {
 			// empty method to be overwrite
 		}
-
-		public skillThrown = function(message: any) {
-			// empty method to be overwrite
-		}
-		public takeDamage = function(message: any) {
+		public gameOver = function(message: any) {
 			// empty method to be overwrite
 		}
 

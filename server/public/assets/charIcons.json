@@ -1,0 +1,20 @@
+{"frames": [
+
+{
+	"filename": "LINK.png",
+	"frame": {"x":0,"y":0,"w":64,"h":64},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+	"sourceSize": {"w":64,"h":64}
+}],
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "charIcons.png",
+	"format": "RGBA8888",
+	"size": {"w":64,"h":64},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:7766ba9db0f637542dcd8a8c91c63122:ad58f572cb145164eff79217205feaf3:9fe6a0a1cbac68e465738d89b221c23e$"
+}
+}

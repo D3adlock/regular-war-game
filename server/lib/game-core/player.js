@@ -4,6 +4,7 @@ function Player(connection) {
 	this.position = {};
 	this.position.x = 300;
 	this.position.y = 300;
+	this.score = 0;
 };
 
 Player.prototype.setPlayerId = function(playerId) {
