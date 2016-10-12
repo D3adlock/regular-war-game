@@ -33,24 +33,44 @@ wsServer.on('request', function(request) {
         var message = JSON.parse(message.utf8Data);
 
         switch(message.type) {
-            case 'requestEnter':
-                if (players[message.playerId] == null) {
+            // request enter is 0
+            case 0:
+                if (players[message.name] == null) {
+
+                    player.setPlayerId(message.name);
+                    players[message.name] = player;
                     
-                    player.setPlayerId(message.playerId);
-                    players[message.playerId] = player;
-                    
-                    player.connection.send(JSON.stringify(
-                    {
-                        playerId: message.playerId,
-                        fightType: message.fightType,
-                        team: message.team,
-                        color: player.color,
+                    var playersScore = [];
+                    for (var key in players) {
+                        playersScore.push({name: key, score: players[key].score} );
+                    }
+
+                    players[message.name].connection.send(JSON.stringify({
+                        name: message.name,
                         x: player.position.x,
                         y: player.position.y, 
-                        type: 'init'
+                        type: 1,
+                        playersScore: playersScore
                     }));
                 } else {
                     player.connection.send(JSON.stringify({error: 'name already exist', type: 'requestEnter'}));
+                }
+                break;
+            case 8:
+                if (message.killed) {
+                    players[message.hittedBy].score++;
+                }
+
+                var newMessage =  {
+                    type: 8,
+                    name: message.name,
+                    hittedBy: message.hittedBy,
+                    killed: message.killed,
+                    currentHP: message.currentHP,
+                    score: players[message.hittedBy].score
+                };
+                for (var key in players) {
+                    players[key].connection.send(JSON.stringify(newMessage));
                 }
                 break;
             default:

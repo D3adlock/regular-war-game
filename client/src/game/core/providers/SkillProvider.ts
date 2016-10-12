@@ -27,7 +27,10 @@ module Rwg {
             player.skills[this.name].skillThrown = this.getSkillThrownMethod(this.name).bind(player);
             player.skills[this.name].castingSpeed = this.castingSpeed;
             player.skills[this.name].skillReadyIn = this.skillReadyIn;
-            player.skills[this.name].skillName = this.name;
+            player.skills[this.name].name = this.name;
+
+            // this is an empty method to store an additional trigger behaviour like the skill icon or the casting bar
+            player.skills[this.name].additionalOnTriggerCallBack = function(){};
 
             // casting animations
             let animationFactory = new CharAnimFactory(this.anim);
@@ -49,6 +52,8 @@ module Rwg {
                 if (this.skills[skillName].skillReadyIn != undefined) {
                     skillThrownTime = skillThrownTime * this.skills[skillName].skillReadyIn;
                 }
+
+                this.skills[skillName].additionalOnTriggerCallBack(skillThrownTime);
 
                 this.game.time.events.add(skillThrownTime,
                     function(){

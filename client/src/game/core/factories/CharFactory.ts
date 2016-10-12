@@ -1,40 +1,55 @@
 /// <reference path="../super/BaseChar.ts" />
 
-/// <reference path="../enums/AttackTypes.ts" />
 /// <reference path="../enums/SkillTypes.ts" />
 /// <reference path="../enums/ActionTypes.ts" />
+/// <reference path="../enums/CollisionCategory.ts" />
 
 /// <reference path="../providers/MovementControlProvider.ts" />
+
 /// <reference path="../providers/AttackProvider.ts" />
-/// <reference path="../providers/RangedAttackProvider.ts" />
 /// <reference path="../providers/AttackControlProvider.ts" />
+
 /// <reference path="../providers/SkillProvider.ts" />
 /// <reference path="../providers/TargetSkillControlProvider.ts" />
 /// <reference path="../providers/AreaSkillControlProvider.ts" />
+/// <reference path="../providers/SpriteUIProvider.ts" />
 
 module Rwg {
 
     export class CharFactory {
     
-    	public static getChar(args:any) {
+    	public static getChar(args:any, game:Phaser.Game) {
 
-    		if (!(args.game && args.atlasName && args.framesPerMovement && args.name)) {
+            // validators for the char argument
+    		if (!(game && args.atlasName && args.framesPerMovement && args.name)) {
     			throw new Error('Error creating character - missing arguments ' +
-    				'args.game && args.atlasName && args.framesPerMovement && args.name');
+    				'game && args.atlasName && args.framesPerMovement && args.name');
     		}
+    		CharFactory.checkFrames(game, args.atlasName, args.framesPerMovement);
 
-    		CharFactory.checkFrames(args.game, args.atlasName, args.framesPerMovement);
-    		let newChar = new BaseChar(args.game, args.name, args.atlasName, args.framesPerMovement);
+    		let newChar = new BaseChar(game, args.name, args.atlasName, args.framesPerMovement,  args.scale);
+            newChar.movementSpeed = args.movementSpeed;
+            newChar.staticMass = args.staticMass;
+            newChar.dinamicMass = args.dinamicMass;
+            newChar.team = args.team;
 
-            if (args.scale) { newChar.scale.setTo(args.scale); }
+            // health settings
+            if (args.health) {
+                newChar.maxHP = args.health.maxHP;
+                newChar.currentHP = args.health.maxHP;
+                newChar.regenHPperSec = args.health.regenHPperSec;
+                newChar.maxMP = args.health.maxMP;
+                newChar.currentMP = args.health.maxMP;
+                newChar.regenMPperSec = args.health.regenMPperSec;
+            }
 
-    		if (args.controlable) { (new MovementControlProvider(args.movementSpeed)).provide(newChar);}
+    		if (args.controlable) { (new MovementControlProvider()).provide(newChar);}
 
     		if (args.attacks) {
                 newChar.attacks = {};
 
                 for (let i=0; i < args.attacks.length ; i++) {
-                    (new AttackProvider(args.attacks[i])).provide(args.game, newChar);
+                    (new AttackProvider(args.attacks[i])).provide(game, newChar);
                 }
 		    }
 
@@ -42,7 +57,7 @@ module Rwg {
                 newChar.skills = {};
 
                 for (let i=0; i < args.skills.length ; i++) {
-                    (new SkillProvider(args.skills[i])).provide(args.game, newChar);
+                    (new SkillProvider(args.skills[i])).provide(game, newChar);
                 }
             }
 
@@ -60,7 +75,7 @@ module Rwg {
 
     		if (args.attackControls) {
                 for (let i=0; i < args.attackControls.length ; i++) {
-                    (new AttackControlProvider(args.attackControls[i])).provide(args.game, newChar);
+                    (new AttackControlProvider(args.attackControls[i])).provide(game, newChar);
                 }
     		}
 
@@ -73,22 +88,53 @@ module Rwg {
                 }
 
                 if (CharFactory.useSkillType(args.skillControls, SkillTypes.AREA)) {
-                    CharFactory.addSkillAreaMethods(args.game, newChar);
+                    CharFactory.addSkillAreaMethods(game, newChar);
                 }
 
                 for (let i=0; i < args.skillControls.length ; i++) {
                     switch(args.skillControls[i].type) {
                         case SkillTypes.TARGET:
-                            (new TargetSkillControlProvider(args.skillControls[i])).provide(args.game, newChar);
+                            (new TargetSkillControlProvider(args.skillControls[i])).provide(game, newChar);
                             break;
                         case SkillTypes.AREA:
-                            (new AreaSkillControlProvider(args.skillControls[i])).provide(args.game, newChar);
+                            (new AreaSkillControlProvider(args.skillControls[i])).provide(game, newChar);
                     }
                 }
             }
 
-            if (args.targetable && args.name != args.game.player.name) {
-                args.game.player.addTargetable(newChar);
+            let state = game.state.getCurrentState();
+            if (args.targetable && args.name != state.player.name) {
+                state.player.addTargetable(newChar);
+            }
+
+            (new SpriteUIProvider()).provide(game, newChar);
+
+            if (args.debugBody) {
+                game.renderMethods['debugBody'+args.name] = function() {
+                    this.game.debug.body(newChar);
+                }.bind(newChar);
+            }
+
+            // setUp the colision detection
+            // the damageHitbox will response to ATTACK category colisions
+            newChar.damageHitbox.m_filter.maskBits = CollisionCategory.ATTACK;
+            if (newChar.team) {
+                // the category of the hit area of this character will be TEAM_ONE_HITBOX
+                newChar.damageHitbox.m_filter.categoryBits = CollisionCategory.TEAM_ONE_HITBOX;
+                // the attack will response to colision with TEAM_ZERO_HITBOX and WALL
+                newChar.attackMask = CollisionCategory.TEAM_ZERO_HITBOX | CollisionCategory.WALL;
+                // the attack will do something special when it colides with TEAM_ZERO_HITBOX
+                newChar.attackCollision = CollisionCategory.TEAM_ZERO_HITBOX;    
+            } else {
+                // same as avobe
+                newChar.damageHitbox.m_filter.categoryBits = CollisionCategory.TEAM_ZERO_HITBOX;
+                newChar.attackMask = CollisionCategory.TEAM_ONE_HITBOX | CollisionCategory.WALL;
+                newChar.attackCollision = CollisionCategory.TEAM_ONE_HITBOX;  
+            }
+
+            // adds the send damage method
+            if (!state.player){
+                CharFactory.addSendDamageUpdateMethod(newChar);
             }
 
     		return newChar;
@@ -129,7 +175,7 @@ module Rwg {
 
             character.addTargetable = function(targetable) {
 
-                targetable.target = this.game.add.sprite(this.x, this.y, 'target');
+                targetable.target = this.game.add.sprite(targetable.x, targetable.y, 'target');
                 targetable.target.position = targetable.position;
                 targetable.target.visible = false;
                 targetable.target.anchor.set(0.5,0.5);
@@ -159,6 +205,45 @@ module Rwg {
                         }
                     }
                 }
+            }.bind(character);
+        }
+
+        private static addSendDamageUpdateMethod(character:any) {
+            character.sendDamageUpdate = function(hittedBy:string, damage:number) {
+
+                // updates the hitted stack for calculating the assists
+                let now = this.game.time.now;
+                this.hittedStack.push({name: hittedBy, time: now});
+                
+                let killed = false;
+                let assist = [];
+
+                if ( (this.currentHP - damage) < 0) {
+                    this.currentHP = this.maxHP;
+                    this.killed = true;
+
+                    // if killed create a new list of assists players
+                    for (let i = 0; i < this.hittedStack.length; i++) {
+                        if (now - this.hittedStack[i].time > 10000) {
+                            if(this.hittedStack[i].name != hittedBy) {
+                                assist.push(this.hittedStack[i].name);
+                            }
+                        }
+                    }
+
+                } else {
+                    this.currentHP -= damage;
+                }
+
+                let message =  {
+                    type: MessageType.DAMAGE,
+                    name: this.name,
+                    hittedBy: hittedBy,
+                    killed: this.killed,
+                    currentHP: this.currentHP,
+                    assist: assist
+                };
+                this.game.ws.send(message);
             }.bind(character);
         }
 

@@ -8,4 +8,3 @@ window.onload = () => {
 	
     var game = new Rwg.Game(ws);
 };
-

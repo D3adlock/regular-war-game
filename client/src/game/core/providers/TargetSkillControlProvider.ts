@@ -1,6 +1,5 @@
 /// <reference path="../super/BaseChar.ts" />
 /// <reference path="../enums/MessageType.ts" />
-/// <reference path="../enums/ActionTypes.ts" />
 /// <reference path="../factories/CharAnimFactory.ts" />
 
 module Rwg {
@@ -10,17 +9,19 @@ module Rwg {
         public name:string;
         public range:number;
         public coolDown:number;
-        public castKey: any;
+        public activationKey: any;
         public maxTargetsSelected: number;
         public targetOnAlly:boolean;
+        private icon:string;
 
         constructor(args:any) {
             this.name = args.name;
             this.range = args.range;
             this.coolDown = args.coolDown;
-            this.castKey = args.castKey;
+            this.activationKey = args.activationKey;
             this.maxTargetsSelected = args.maxTargetsSelected;
             this.targetOnAlly = args.targetOnAlly;
+            this.icon = args.icon;
         }
 
         public provide(game:Phaser.Game, character:BaseChar) {
@@ -28,23 +29,20 @@ module Rwg {
             character.skills[this.name].skillTime = 0;
             character.skills[this.name].range = this.range;
             character.skills[this.name].coolDown = this.coolDown;
-            character.skills[this.name].castKey = this.castKey;
+            character.skills[this.name].activationKey = this.activationKey;
             character.skills[this.name].maxTargetsSelected = this.maxTargetsSelected;
             character.skills[this.name].casting = false;
             character.skills[this.name].targetOnAlly = this.targetOnAlly;
-
+            character.skills[this.name].icon = this.icon;
             character.skills[this.name].releaseSkill = this.getReleaseSkillMethod(this.name).bind(character);
-
-            let key = game.input.keyboard.addKey(this.castKey);
-            key.onDown.add(this.getSkillSelectedMethod(this.name), character);
-            
+            character.skills[this.name].select = this.getSkillSelectedMethod(this.name).bind(character);
             character.skills[this.name].skillTrigger = this.getSkillTriggerMethod(this.name).bind(character);
+            
             character.updateMethods['checkRangeFor'+this.name] = this.getCheckRangeForSkillMethod(this.name).bind(character);
         }
 
         private getSkillSelectedMethod(skillName:string) {
             return function() {
-                
                 if (this.currentSelectedSkill) {
                     if (this.skills[skillName].casting) {
                         return;
@@ -101,6 +99,8 @@ module Rwg {
                     this.skills[skillName].skillThrown(message);
 
                     this.skills[skillName].skillTime = this.game.time.now + this.skills[skillName].coolDown;
+                } else {
+                    console.log('no targets selected');
                 }
             }
         }

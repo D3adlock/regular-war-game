@@ -25,8 +25,14 @@ module Rwg {
 			this.messagesByteDataReceived += this.lengthInUtf8Bytes(message.data);
 			let message = JSON.parse(message.data);
 			switch(message.type) {
-			    case MessageType.INIT:
-			        this.init(message);
+				case MessageType.NAME_SELECTION:
+					this.continueToCharSelection(message);
+					break;
+			    case MessageType.CHARACTER_SELECTION:
+			        this.continueToArenaSelection(message);
+			        break;
+			    case MessageType.ARENA_SELECTION:
+			        this.initArena(message);
 			        break;
 			    case MessageType.NEW_PLAYER:
 			        this.newPlayer(message);
@@ -37,30 +43,38 @@ module Rwg {
 				case MessageType.MOVE:
 			        this.move(message);
 			        break;
-				case 'removePlayer':
-			        this.removePlayer(message);
-			        break;
-				case 'requestEnter':
-			        this.requestEnter(message);
+				case MessageType.PLAYER_LEFT:
+			        this.playerLeft(message);
 			        break;
 				case MessageType.ATTACK:
 			        this.attack(message);
 			        break;
-				case 'playerKilled':
-			        this.playerKilled(message);
+				case MessageType.DAMAGE:
+			        this.damage(message);
 			        break;
 	        	case MessageType.SKILL:
 			        this.skill(message);
 			        break;
-				case 'takeDamage':
-					this.takeDamage(message);
-					break;
+	        	case MessageType.GAME_OVER:
+			        this.gameOver(message);
+			        break;
 			    default:
-			        console.log('no type');
+			        console.log('no type ' + message.type + " ---> ");
+			        for (key in message) {
+			        	console.log(key + " : " + message[key]);
+			        }
 			}
 		}
 
-		public init = function(message: any) {
+		public continueToCharSelection = function(message: any) {
+			// empty method to be overwrite
+		}
+
+		public continueToArenaSelection = function(message: any) {
+			// empty method to be overwrite
+		}
+
+		public initArena = function(message: any) {
 			// empty method to be overwrite
 		}
 
@@ -76,11 +90,7 @@ module Rwg {
 			// empty method to be overwrite
 		}
 
-		public removePlayer = function(message: any) {
-			// empty method to be overwrite
-		}
-
-		public requestEnter = function(message: any) {
+		public playerLeft = function(message: any) {
 			// empty method to be overwrite
 		}
 
@@ -88,18 +98,13 @@ module Rwg {
 			// empty method to be overwrite
 		}
 
-		public playerKilled = function(message: any) {
-			// empty method to be overwrite
-		}
-
-		public debug = function(message: any) {
-			// empty method to be overwrite
-		}
-
 		public skill = function(message: any) {
 			// empty method to be overwrite
 		}
-		public takeDamage = function(message: any) {
+		public damage = function(message: any) {
+			// empty method to be overwrite
+		}
+		public gameOver = function(message: any) {
 			// empty method to be overwrite
 		}
 

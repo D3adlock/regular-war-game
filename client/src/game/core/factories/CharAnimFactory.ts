@@ -8,6 +8,12 @@ module Rwg {
         private prefix:string;
         private framesNumber:number;
         private frames:any;
+        
+        private upFrames:any;
+        private downFrames:any;
+        private leftFrames:any;
+        private rightFrames:any;
+
 
         constructor(args:any) {
 

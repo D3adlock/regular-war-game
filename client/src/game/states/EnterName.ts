@@ -7,6 +7,9 @@ module Rwg {
         private textInput: Phaser.bitmapText;
 
         create() {
+
+            let background = this.game.add.sprite(0,0,'background');
+
             var style = { font: "16px Arial", fill: "#ffffff", align: "center"};
             this.textInput = this.game.add.text(50, 100, '', style);
 
@@ -20,7 +23,7 @@ module Rwg {
 
             this.game.input.keyboard.addCallbacks(this, null, null, this.keyPress);
 
-            this.game.ws.init = this.initStage.bind(this);
+            this.game.ws.continueToCharSelection = this.continueToCharSelection.bind(this);
         }
 
         private keyPress(char: any) {
@@ -34,26 +37,33 @@ module Rwg {
         }
 
         private submit() {
+
+            if (!/^[0-9a-zA-Z]+$/.test(this.textInput.text)){
+                console.log("ivalid characters");
+                return;
+            }
+
             if (this.textInput.text != '') {
-                this.game.ws.send(
-                {
-                    type: MessageType.REQUEST_ENTER,
-                    x: 80,
-                    y: 80,
+                this.game.ws.send({
+                    type: MessageType.NAME_SELECTION, 
                     name: this.textInput.text
                 });
+            } else {
+                console.log("name is empty");
             }
         }
 
-        private request(message: any) {
-            this.error.text = message.error;
-        }
-
-        private initStage(message: any) {
-            // remove the onPress callback
-            this.game.input.keyboard.onPressCallback = null;
-            // starts the new state
-            this.game.state.start('TestStage', true, false, message);
+        private continueToCharSelection(message: any) {
+            if (message.nameAccepted) {
+                this.game.input.keyboard.onPressCallback = null;
+                this.game.state.start('CharSelection', true, false, {
+                    name: this.textInput.text
+                });
+            } else {
+                console.log(message.error);
+                //this.error.text = message.error;
+            }
+            
         }
     }
 }

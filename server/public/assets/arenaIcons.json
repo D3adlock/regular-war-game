@@ -1,0 +1,20 @@
+{"frames": [
+
+{
+	"filename": "ForestTown.png",
+	"frame": {"x":0,"y":0,"w":128,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":128},
+	"sourceSize": {"w":128,"h":128}
+}],
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "arenaIcons.png",
+	"format": "RGBA8888",
+	"size": {"w":128,"h":128},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:7c0ff0030a36833141585dfed17fd672:057c6f54d8fc6a9a742c207a56fbba80:58f78b94ea1133356a0ef56eb4d5e630$"
+}
+}

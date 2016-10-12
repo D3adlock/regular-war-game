@@ -5,407 +5,902 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Rwg;
 (function (Rwg) {
-    var StartScreen = (function (_super) {
-        __extends(StartScreen, _super);
-        function StartScreen() {
+    var Boot = (function (_super) {
+        __extends(Boot, _super);
+        function Boot() {
             _super.apply(this, arguments);
         }
-        StartScreen.prototype.preload = function () {
-            this.game.load.atlas('link', '../assets/link.png', '../assets/link.json');
+        Boot.prototype.preload = function () {
+            this.game.load.atlas('link2', '../assets/link2.png', '../assets/link2.json');
+            this.game.load.atlas('uiAtlas', '../assets/uiAtlas.png', '../assets/uiAtlas.json');
+            this.game.load.atlas('charIcons', '../assets/charIcons.png', '../assets/charIcons.json');
+            this.game.load.atlas('arenaIcons', '../assets/arenaIcons.png', '../assets/arenaIcons.json');
+            this.game.load.image('background', '../assets/background.png');
             this.game.load.spritesheet('arrow', '../assets/arrow.png', 32, 10, 1);
             this.game.load.spritesheet('target', '../assets/target.png', 48, 48, 1);
-            this.game.load.image('swordIcon', '../assets/sword.png', 50, 50);
-            this.game.load.image('bowIcon', '../assets/bow.png', 50, 50);
-            this.game.load.image('testIcon', '../assets/test.png', 50, 50);
-            this.game.load.image('jumpIcon', '../assets/jump.png', 50, 50);
-            this.game.load.spritesheet('meleeType', '../assets/melee.png', 200, 200);
-            this.game.load.spritesheet('rangedType', '../assets/ranged.png', 200, 200);
-            this.game.load.image('background', '../assets/debug-grid-1920x1920.png');
+            this.game.load.tilemap('forestTownJSON', '../assets/forestTown.json', null, Phaser.Tilemap.TILED_JSON);
+            this.game.load.image('forestTownImage', '../assets/forestTown.png');
         };
-        StartScreen.prototype.create = function () {
+        Boot.prototype.create = function () {
+            this.game.physics.startSystem(Phaser.Physics.BOX2D);
+            this.game.state.start('EnterName', true, false);
+            // this.game.state.start('GameOver', true, false);
+        };
+        return Boot;
+    }(Phaser.State));
+    Rwg.Boot = Boot;
+})(Rwg || (Rwg = {}));
+var Rwg;
+(function (Rwg) {
+    (function (MessageType) {
+        MessageType[MessageType["NAME_SELECTION"] = 9] = "NAME_SELECTION";
+        MessageType[MessageType["CHARACTER_SELECTION"] = 10] = "CHARACTER_SELECTION";
+        MessageType[MessageType["ARENA_SELECTION"] = 11] = "ARENA_SELECTION";
+        MessageType[MessageType["NEW_PLAYER"] = 3] = "NEW_PLAYER";
+        MessageType[MessageType["REQUEST_PLAYER_INFO"] = 2] = "REQUEST_PLAYER_INFO";
+        MessageType[MessageType["PLAYER_LEFT"] = 12] = "PLAYER_LEFT";
+        MessageType[MessageType["MOVE"] = 4] = "MOVE";
+        MessageType[MessageType["VELOCITY"] = 5] = "VELOCITY";
+        MessageType[MessageType["ATTACK"] = 6] = "ATTACK";
+        MessageType[MessageType["SKILL"] = 7] = "SKILL";
+        MessageType[MessageType["DAMAGE"] = 8] = "DAMAGE";
+        MessageType[MessageType["GAME_OVER"] = 1] = "GAME_OVER";
+    })(Rwg.MessageType || (Rwg.MessageType = {}));
+    var MessageType = Rwg.MessageType;
+    ;
+})(Rwg || (Rwg = {}));
+/// <reference path="../core/enums/MessageType.ts" />
+var Rwg;
+(function (Rwg) {
+    var EnterName = (function (_super) {
+        __extends(EnterName, _super);
+        function EnterName() {
+            _super.apply(this, arguments);
+        }
+        EnterName.prototype.create = function () {
+            var background = this.game.add.sprite(0, 0, 'background');
             var style = { font: "16px Arial", fill: "#ffffff", align: "center" };
-            this.instructions = this.game.add.text(50, 50, 'write your player name, submit with ENTER : ', style);
             this.textInput = this.game.add.text(50, 100, '', style);
-            // class selection sprites
-            this.meleeSprite = this.game.add.sprite(550, 20, 'meleeType');
-            this.meleeSprite.alpha = 0.5;
-            this.meleeSprite.inputEnabled = true;
-            this.meleeSprite.selected = false;
-            this.rangedSprite = this.game.add.sprite(550, 260, 'rangedType');
-            this.rangedSprite.alpha = 0.5;
-            this.rangedSprite.inputEnabled = true;
-            this.rangedSprite.selected = false;
-            // team selection sprites
-            var teamOneBmd = this.game.add.bitmapData(50, 50);
-            teamOneBmd.ctx.rect(0, 0, 50, 50);
-            teamOneBmd.ctx.fillStyle = '#ff0000';
-            teamOneBmd.ctx.fill();
-            this.teamOne = this.game.add.sprite(550, 490, teamOneBmd);
-            this.teamOne.alpha = 0.5;
-            this.teamOne.inputEnabled = true;
-            this.teamOne.selected = false;
-            var styleTeamOne = { font: "32px Arial", fill: "#ffffff", align: "center" };
-            var textOne = this.game.add.text(this.teamOne.x, this.teamOne.y, "1", styleTeamOne);
-            textOne.anchor.set(-0.3, -0.3);
-            var teamTwoBmd = this.game.add.bitmapData(50, 50);
-            teamTwoBmd.ctx.rect(0, 0, 50, 50);
-            teamTwoBmd.ctx.fillStyle = '#0000ff';
-            teamTwoBmd.ctx.fill();
-            this.teamTwo = this.game.add.sprite(700, 490, teamTwoBmd);
-            this.teamTwo.alpha = 0.5;
-            this.teamTwo.inputEnabled = true;
-            this.teamTwo.selected = false;
-            var styleTeamTwo = { font: "32px Arial", fill: "#ffffff", align: "center" };
-            var textTwo = this.game.add.text(this.teamTwo.x, this.teamTwo.y, "2", styleTeamTwo);
-            textTwo.anchor.set(-0.3, -0.3);
-            var styleError = { font: "16px Arial", fill: "#ff0000", align: "center" };
-            this.error = this.game.add.text(50, 120, '', styleError);
             this.game.input.keyboard.removeKeyCapture([8, 13]);
             var del = this.game.input.keyboard.addKey(Phaser.KeyCode.BACKSPACE);
             del.onDown.add(this.deleteLastLetter, this);
             var enter = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
             enter.onDown.add(this.submit, this);
             this.game.input.keyboard.addCallbacks(this, null, null, this.keyPress);
-            this.game.ws.init = this.initArena.bind(this);
-            this.game.ws.requestEnter = this.requestEnter.bind(this);
-            //this.quickAdvance();
+            this.game.ws.continueToCharSelection = this.continueToCharSelection.bind(this);
         };
-        StartScreen.prototype.update = function () {
-            if (this.meleeSprite.input.pointerOver()) {
-                this.meleeSprite.alpha = 1;
-                if (this.game.input.activePointer.leftButton.isDown) {
-                    this.meleeSprite.selected = true;
-                    this.rangedSprite.selected = false;
-                    this.fightType = 'melee';
-                }
-            }
-            else {
-                if (!this.meleeSprite.selected) {
-                    this.meleeSprite.alpha = 0.5;
-                }
-            }
-            if (this.rangedSprite.input.pointerOver()) {
-                this.rangedSprite.alpha = 1;
-                if (this.game.input.activePointer.leftButton.isDown) {
-                    this.meleeSprite.selected = false;
-                    this.rangedSprite.selected = true;
-                    this.fightType = 'ranged';
-                }
-            }
-            else {
-                if (!this.rangedSprite.selected) {
-                    this.rangedSprite.alpha = 0.5;
-                }
-            }
-            // team selection
-            if (this.teamOne.input.pointerOver()) {
-                this.teamOne.alpha = 1;
-                if (this.game.input.activePointer.leftButton.isDown) {
-                    this.teamOne.selected = true;
-                    this.teamTwo.selected = false;
-                    this.team = 1;
-                }
-            }
-            else {
-                if (!this.teamOne.selected) {
-                    this.teamOne.alpha = 0.5;
-                }
-            }
-            if (this.teamTwo.input.pointerOver()) {
-                this.teamTwo.alpha = 1;
-                if (this.game.input.activePointer.leftButton.isDown) {
-                    this.teamTwo.selected = true;
-                    this.teamOne.selected = false;
-                    this.team = 2;
-                }
-            }
-            else {
-                if (!this.teamTwo.selected) {
-                    this.teamTwo.alpha = 0.5;
-                }
-            }
-        };
-        StartScreen.prototype.keyPress = function (char) {
+        EnterName.prototype.keyPress = function (char) {
             this.textInput.text = this.textInput.text + char;
         };
-        StartScreen.prototype.deleteLastLetter = function () {
+        EnterName.prototype.deleteLastLetter = function () {
             if (this.textInput.text.length > 0) {
                 this.textInput.text = this.textInput.text.substring(0, this.textInput.text.length - 1);
             }
         };
-        StartScreen.prototype.submit = function () {
-            if (this.textInput.text != '' && this.team != undefined) {
+        EnterName.prototype.submit = function () {
+            if (!/^[0-9a-zA-Z]+$/.test(this.textInput.text)) {
+                console.log("ivalid characters");
+                return;
+            }
+            if (this.textInput.text != '') {
                 this.game.ws.send({
-                    type: 'requestEnter',
-                    fightType: this.fightType,
-                    team: this.team,
-                    playerId: this.textInput.text
+                    type: Rwg.MessageType.NAME_SELECTION,
+                    name: this.textInput.text
                 });
             }
             else {
-                this.error.text = 'Write a playerName, select a team and a weapon!';
+                console.log("name is empty");
             }
         };
-        StartScreen.prototype.quickAdvance = function () {
-            this.game.ws.send({
-                type: 'requestEnter',
-                fightType: 'melee',
-                team: 1,
-                playerId: 'claudio'
-            });
-        };
-        StartScreen.prototype.requestEnter = function (message) {
-            this.error.text = message.error;
-        };
-        StartScreen.prototype.initArena = function (message) {
-            // remove the onPress callback
-            this.game.input.keyboard.onPressCallback = null;
-            // starts the new state
-            this.game.state.start('Arena1', true, false, message);
-        };
-        return StartScreen;
-    }(Phaser.State));
-    Rwg.StartScreen = StartScreen;
-})(Rwg || (Rwg = {}));
-var Rwg;
-(function (Rwg) {
-    var MiniLifeBar = (function () {
-        function MiniLifeBar(game, allyTeam) {
-            this.mark = game.add.graphics(0, 0);
-            this.mark.beginFill(0x000000);
-            this.mark.drawRect(-30, 26, 60, 10);
-            this.life = game.add.graphics(0, 0);
-            if (allyTeam) {
-                this.life.beginFill(0x00ff00);
+        EnterName.prototype.continueToCharSelection = function (message) {
+            if (message.nameAccepted) {
+                this.game.input.keyboard.onPressCallback = null;
+                this.game.state.start('CharSelection', true, false, {
+                    name: this.textInput.text
+                });
             }
             else {
-                this.life.beginFill(0xff0000);
+                console.log(message.error);
             }
-            this.life.drawRect(-28, 28, 56, 6);
-            this.mark.addChild(this.life);
-        }
-        MiniLifeBar.prototype.setPosition = function (position) {
-            this.mark.position = position;
         };
-        MiniLifeBar.prototype.updateLifeBar = function (maxHp, currentHp) {
-            // this.hipointsDisplay.text = currentHp + '/' + maxHp;
-            var width = (currentHp * 56) / maxHp;
-            this.life.width = width;
-        };
-        return MiniLifeBar;
-    }());
-    Rwg.MiniLifeBar = MiniLifeBar;
+        return EnterName;
+    }(Phaser.State));
+    Rwg.EnterName = EnterName;
 })(Rwg || (Rwg = {}));
-/// <reference path="../ui/MiniLifeBar.ts" />
 var Rwg;
 (function (Rwg) {
-    var Player = (function (_super) {
-        __extends(Player, _super);
-        function Player(game, x, y) {
-            _super.call(this, game, x, y, 'link');
+    var Link = (function () {
+        function Link() {
+            this.base = {
+                atlasName: 'link2',
+                framesPerMovement: 6,
+                movementSpeed: 300,
+                scale: 2.0,
+                dinamicMass: 20,
+                staticMass: 150,
+                health: {
+                    maxHP: 50,
+                    regenHPperSec: 0.08,
+                    maxMP: 50,
+                    regenMPperSec: 0.08
+                },
+                attacks: [
+                    {
+                        name: 'sword',
+                        damage: 20,
+                        range: 25,
+                        attackSpeed: 300,
+                        hitAreaWidth: 10,
+                        hitAreaHeight: 70,
+                        debug: false,
+                        anim: {
+                            framesNumber: 5,
+                            prefix: 'sword'
+                        }
+                    },
+                    {
+                        name: 'bow',
+                        spriteName: 'arrow',
+                        damage: 8,
+                        range: 600,
+                        attackSpeed: 250,
+                        hitAreaWidth: 35,
+                        hitAreaHeight: 10,
+                        cadence: 2,
+                        bulletSpeed: 500,
+                        debug: false,
+                        anim: {
+                            framesNumber: 5,
+                            prefix: 'bow'
+                        }
+                    }
+                ],
+                skills: [
+                    {
+                        name: 'testTargetSkill',
+                        anim: {
+                            frames: ['standLeft.png', 'standUp.png', 'standRight.png', 'standDown.png', 'cast1.png', 'cast2.png', 'cast3.png']
+                        },
+                        castingSpeed: 1500,
+                        effect: function (targets) { console.log(targets); }
+                    },
+                    {
+                        name: 'testAreaSkill',
+                        anim: {
+                            frames: ['standLeft.png', 'standUp.png', 'standRight.png', 'standDown.png']
+                        },
+                        castingSpeed: '3000',
+                        skillReadyIn: 0.5,
+                        effect: function (targets) { console.log(targets); }
+                    },
+                    {
+                        name: 'jump',
+                        skillReadyIn: 0,
+                        anim: {
+                            frames: ['standLeft.png', 'standUp.png', 'standRight.png', 'standDown.png']
+                        },
+                        castingSpeed: 300,
+                        effect: function (targets) {
+                            this.game.physics.arcade.moveToXY(this, targets.x, targets.y, null, 300 - 20);
+                            this.game.time.events.add(300 - 20, function () {
+                                this.stopMovement();
+                            }, this);
+                        }
+                    }
+                ]
+            };
+            this.attackControls = [
+                {
+                    name: 'sword',
+                    coolDown: 800,
+                    activationKey: Phaser.KeyCode.ONE,
+                    icon: 'sword.png'
+                },
+                {
+                    name: 'bow',
+                    coolDown: 300,
+                    activationKey: Phaser.KeyCode.TWO,
+                    icon: 'bow.png'
+                }
+            ];
+            this.skillControls = [
+                {
+                    type: Rwg.SkillTypes.TARGET,
+                    name: 'testTargetSkill',
+                    range: 300,
+                    coolDown: 2000,
+                    activationKey: Phaser.KeyCode.THREE,
+                    maxTargetsSelected: 2,
+                    targetOnAlly: false,
+                    icon: 'powerStrike.png'
+                },
+                {
+                    type: Rwg.SkillTypes.AREA,
+                    name: 'testAreaSkill',
+                    range: 300,
+                    coolDown: 6000,
+                    activationKey: Phaser.KeyCode.FOUR,
+                    icon: 'fireBall.png'
+                },
+                {
+                    type: Rwg.SkillTypes.AREA,
+                    name: 'jump',
+                    range: 400,
+                    coolDown: 600,
+                    activationKey: Phaser.KeyCode.FIVE,
+                    icon: 'agility.png'
+                }
+            ];
+        }
+        return Link;
+    }());
+    Rwg.Link = Link;
+})(Rwg || (Rwg = {}));
+/// <reference path="../characters/Link.ts" />
+var Rwg;
+(function (Rwg) {
+    var CharacterSelecter = (function () {
+        function CharacterSelecter() {
+        }
+        CharacterSelecter.getCharacterArgs = function (characterName) {
+            switch (characterName) {
+                case 'LINK':
+                    return new Rwg.Link();
+                    break;
+                default:
+                    return new Rwg.Link();
+            }
+        };
+        CharacterSelecter.characterList = [
+            { name: 'LINK', desc: "Link \nA stolen character I wanted to use" },
+            { name: 'LINK', desc: "Link \nA stolen character I wanted to use" },
+            { name: 'LINK', desc: "Link \nA stolen character I wanted to use" },
+            { name: 'LINK', desc: "Link \nA stolen character I wanted to use" },
+            { name: 'LINK', desc: "Link \nA stolen character I wanted to use" },
+            { name: 'LINK', desc: "Link \nA stolen character I wanted to use" }
+        ];
+        return CharacterSelecter;
+    }());
+    Rwg.CharacterSelecter = CharacterSelecter;
+})(Rwg || (Rwg = {}));
+/// <reference path="../core/enums/MessageType.ts" />
+/// <reference path="../characters/CharacterSelecter.ts" />
+var Rwg;
+(function (Rwg) {
+    var CharSelection = (function (_super) {
+        __extends(CharSelection, _super);
+        function CharSelection() {
+            _super.apply(this, arguments);
+        }
+        CharSelection.prototype.init = function (message) {
+            this.playerName = message.name;
+        };
+        CharSelection.prototype.create = function () {
+            var background = this.game.add.tileSprite(0, 0, 800, 600, 'background');
+            background.fixedToCamera = true;
+            this.slots = [];
+            // description Container
+            var descriptionContainer = this.game.add.group();
+            descriptionContainer.fixedToCamera = true;
+            descriptionContainer.scale.set(2);
+            descriptionContainer.create(100 - 32, 200, 'uiAtlas', 'containerBorderRadiusBegin.png');
+            var content = this.add.tileSprite(100, 200, 200, 64, 'uiAtlas', 'containerBorderRadius.png');
+            descriptionContainer.add(content);
+            descriptionContainer.create(100 + 200, 200, 'uiAtlas', 'containerBorderRadiusEnd.png');
+            //description Text
+            var description = this.game.add.group();
+            description.fixedToCamera = true;
+            var descriptionText = this.textLine(0, 0, Rwg.CharacterSelecter.characterList[0].desc, 12, content.width * 2);
+            descriptionText.x = Math.floor(content.x + content.width / 2) * 2;
+            descriptionText.y = Math.floor(content.y + content.height / 2) * 2;
+            descriptionText.anchor.set(0.5);
+            description.add(descriptionText);
+            // character list
+            var charList = this.game.add.group();
+            charList.scale.set(2);
+            // 
+            var charListIcons = this.game.add.group();
+            var y = 110;
+            var x = 100;
+            // first element
+            var begin = charList.create(x, y, 'uiAtlas', 'charIconSlotBegin.png');
+            charListIcons.create((x + 18) * 2, (y + 4) * 2, 'charIcons', Rwg.CharacterSelecter.characterList[0].name + ".png");
+            x += 18 + 32 + 4;
+            this.slots.push({ name: Rwg.CharacterSelecter.characterList[0], icon: begin });
+            // middle elements
+            for (var i = 1; i <= Rwg.CharacterSelecter.characterList.length - 2; i++) {
+                this.slots.push({ name: Rwg.CharacterSelecter.characterList[i], icon: charList.create(x, y, 'uiAtlas', 'charIconSlot.png') });
+                charListIcons.create((x + 8) * 2, (y + 4) * 2, 'charIcons', Rwg.CharacterSelecter.characterList[i].name + ".png");
+                x += 8 + 32 + 4;
+            }
+            //last element
+            var end = charList.create(x, y, 'uiAtlas', 'charIconSlotEnd.png');
+            this.slots.push({ name: Rwg.CharacterSelecter.characterList[Rwg.CharacterSelecter.characterList.length - 1], icon: end });
+            charListIcons.create((x + 8) * 2, (y + 4) * 2, 'charIcons', Rwg.CharacterSelecter.characterList[Rwg.CharacterSelecter.characterList.length - 1].name + ".png");
+            // pointer
+            this.pointer = charList.create(0, 0, 'uiAtlas', 'pointer.png');
+            this.pointer.x = 100 + 18 + 8;
+            this.pointer.y = y + 8 + 32;
+            this.pointer.pos = 0;
+            // movement cursor left
+            var left = this.game.input.keyboard.addKey(Phaser.KeyCode.A);
+            left.onDown.add(function () {
+                if (this.pointer.pos != 0) {
+                    this.pointer.pos--;
+                    var x_1 = 8 + 8;
+                    if (this.pointer.pos == 0) {
+                        x_1 = 18 + 8;
+                    }
+                    this.pointer.x = this.slots[this.pointer.pos].icon.x + x_1;
+                    descriptionText.text = Rwg.CharacterSelecter.characterList[this.pointer.pos].desc;
+                }
+            }, this);
+            // right
+            var right = this.game.input.keyboard.addKey(Phaser.KeyCode.D);
+            right.onDown.add(function () {
+                if (this.pointer.pos != Rwg.CharacterSelecter.characterList.length - 1) {
+                    this.pointer.pos++;
+                    this.pointer.x = this.slots[this.pointer.pos].icon.x + 8 + 8;
+                    descriptionText.text = Rwg.CharacterSelecter.characterList[this.pointer.pos].desc;
+                }
+            }, this);
+            // resize the world
+            var width = this.slots[Rwg.CharacterSelecter.characterList.length - 1].icon.x + 58 + 100;
+            this.game.world.setBounds(0, 0, width * 2, 600);
+            this.game.camera.follow(this.pointer);
+            // instructions
+            var instructions = this.game.add.group();
+            instructions.fixedToCamera = true;
+            instructions.scale.set(2);
+            // instruction container
+            instructions.create(100 - 32, 40 - 22, 'uiAtlas', 'containerBorderRadiusBegin.png');
+            var content = this.add.tileSprite(100, 40 - 22, 200, 64, 'uiAtlas', 'containerBorderRadius.png');
+            instructions.add(content);
+            instructions.create(100 + 200, 40 - 22, 'uiAtlas', 'containerBorderRadiusEnd.png');
+            var text = this.textLine(0, 0, 'SELECT', 20, content.width);
+            text.x = Math.floor(content.x + content.width / 2) * 2;
+            text.y = Math.floor(content.y - 10 + content.height / 2) * 2;
+            text.anchor.set(0.5);
+            text.fixedToCamera = true;
+            var text = this.textLine(0, 0, 'Choose (ENTER)', 14, content.width);
+            text.x = Math.floor(content.x + content.width / 2) * 2;
+            text.y = Math.floor(content.y + 15 + content.height / 2) * 2;
+            text.anchor.set(0.5);
+            text.fixedToCamera = true;
+            instructions.create(100, 45, 'uiAtlas', 'arrowLeft.png');
+            instructions.add(this.textLine(100 + 11 + 5, 40, 'A'));
+            instructions.create(300 - 11, 45, 'uiAtlas', 'arrowRight.png');
+            instructions.add(this.textLine(300 - 11 - 11 - 5, 40, 'D'));
+            // submit button
+            this.game.input.keyboard.removeKeyCapture(13);
+            var submit = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
+            submit.onDown.add(function () {
+                var message = {
+                    type: Rwg.MessageType.CHARACTER_SELECTION,
+                    character: Rwg.CharacterSelecter.characterList[this.pointer.pos].name
+                };
+                this.game.ws.send(message);
+            }, this);
+            this.game.ws.continueToArenaSelection = this.continueToArenaSelection.bind(this);
+        };
+        CharSelection.prototype.textLine = function (x, y, text, size, wordWrapWidth) {
+            var font = 12;
+            if (size) {
+                font = size;
+            }
+            var text = this.game.add.text(x, y, text, { font: font + "px Arial", fill: "#ffffff",
+                wordWrap: true, wordWrapWidth: wordWrapWidth, align: "center" });
+            text.stroke = '#000000';
+            text.strokeThickness = 2;
+            return text;
+        };
+        CharSelection.prototype.continueToArenaSelection = function (message) {
+            this.game.state.start('ArenaSelection', true, false, {
+                name: this.playerName,
+                character: Rwg.CharacterSelecter.characterList[this.pointer.pos].name
+            });
+        };
+        return CharSelection;
+    }(Phaser.State));
+    Rwg.CharSelection = CharSelection;
+})(Rwg || (Rwg = {}));
+/// <reference path="../characters/Link.ts" />
+var Rwg;
+(function (Rwg) {
+    var ArenaSelecter = (function () {
+        function ArenaSelecter() {
+        }
+        ArenaSelecter.arenaList = [
+            { name: 'ForestTown', desc: "Forest Town \n1", icon: 'ForestTown.png' },
+            { name: 'ForestTown', desc: "Forest Town \n2", icon: 'ForestTown.png' },
+            { name: 'ForestTown', desc: "Forest Town \n3", icon: 'ForestTown.png' },
+            { name: 'ForestTown', desc: "Forest Town \n4", icon: 'ForestTown.png' },
+            { name: 'ForestTown', desc: "Forest Town \n5", icon: 'ForestTown.png' }
+        ];
+        return ArenaSelecter;
+    }());
+    Rwg.ArenaSelecter = ArenaSelecter;
+})(Rwg || (Rwg = {}));
+/// <reference path="../core/enums/MessageType.ts" />
+/// <reference path="../arenas/ArenaSelecter.ts" />
+var Rwg;
+(function (Rwg) {
+    var ArenaSelection = (function (_super) {
+        __extends(ArenaSelection, _super);
+        function ArenaSelection() {
+            _super.apply(this, arguments);
+        }
+        ArenaSelection.prototype.init = function (message) {
+            this.playerName = message.name;
+            this.character = message.character;
+        };
+        ArenaSelection.prototype.create = function () {
+            var background = this.game.add.tileSprite(0, 0, 800, 600, 'background');
+            background.fixedToCamera = true;
+            var teamselectorGroup = this.game.add.group();
+            teamselectorGroup.fixToCamera = true;
+            teamselectorGroup.scale.set(2);
+            var xpos = 145;
+            var ypos = 25;
+            teamselectorGroup.create(xpos, ypos, 'uiAtlas', 'team_select_begin.png');
+            var team1 = this.add.tileSprite(xpos + 32, ypos, 60, 24, 'uiAtlas', 'team_select.png');
+            teamselectorGroup.add(team1);
+            teamselectorGroup.create(xpos + 32 + 60, ypos, 'uiAtlas', 'team_select_end_2.png');
+            var orbTeam1 = teamselectorGroup.create(xpos + 5, ypos + 5, 'uiAtlas', 'orb.png');
+            this.textLine((xpos + 45) * 2, (ypos + 7) * 2, 'TEAM 0 (W)', 15, team1);
+            ypos = 250;
+            teamselectorGroup.create(xpos, ypos, 'uiAtlas', 'team_select_begin.png');
+            var team2 = this.add.tileSprite(xpos + 32, ypos, 60, 24, 'uiAtlas', 'team_select.png');
+            teamselectorGroup.add(team2);
+            teamselectorGroup.create(xpos + 32 + 60, ypos, 'uiAtlas', 'team_select_end_2.png');
+            var orbTeam2 = teamselectorGroup.create(xpos + 5, ypos + 5, 'uiAtlas', 'orb.png');
+            this.textLine((xpos + 45) * 2, (ypos + 7) * 2, 'TEAM 1 (S)', 15, team1);
+            // movement cursor UP
+            var up = this.game.input.keyboard.addKey(Phaser.KeyCode.W);
+            up.onDown.add(function () {
+                orbTeam1.frameName = 'red_orb.png';
+                orbTeam2.frameName = 'orb.png';
+                this.selectedTeam = 0;
+            }, this);
+            // Down
+            var down = this.game.input.keyboard.addKey(Phaser.KeyCode.S);
+            down.onDown.add(function () {
+                orbTeam2.frameName = 'red_orb.png';
+                orbTeam1.frameName = 'orb.png';
+                this.selectedTeam = 1;
+            }, this);
+            this.addArenaContainer(Rwg.ArenaSelecter.arenaList[0], xpos + 25, 80);
+            var index = 0;
+            // movement cursor left
+            var left = this.game.input.keyboard.addKey(Phaser.KeyCode.A);
+            left.onDown.add(function () {
+                if (index > 0) {
+                    index--;
+                    this.icon = Rwg.ArenaSelecter.arenaList[index].icon;
+                    this.description.text = Rwg.ArenaSelecter.arenaList[index].desc;
+                    this.selectedArena = Rwg.ArenaSelecter.arenaList[index].name;
+                }
+            }, this);
+            // right
+            var right = this.game.input.keyboard.addKey(Phaser.KeyCode.D);
+            right.onDown.add(function () {
+                if (index < Rwg.ArenaSelecter.arenaList.length) {
+                    index++;
+                    this.icon = Rwg.ArenaSelecter.arenaList[index].icon;
+                    this.description.text = Rwg.ArenaSelecter.arenaList[index].desc;
+                    this.selectedArena = Rwg.ArenaSelecter.arenaList[index].name;
+                }
+            }, this);
+            this.selectedTeam = null;
+            this.selectedArena = Rwg.ArenaSelecter.arenaList[0].name;
+            // submit button
+            this.game.input.keyboard.removeKeyCapture(13);
+            var submit = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
+            submit.onDown.add(function () {
+                if (this.selectedTeam != null) {
+                    var message = {
+                        type: Rwg.MessageType.ARENA_SELECTION,
+                        arena: this.selectedArena,
+                        team: this.selectedTeam
+                    };
+                    this.game.ws.send(message);
+                }
+            }, this);
+            this.game.ws.initArena = this.initArena.bind(this);
+        };
+        ArenaSelection.prototype.initArena = function (message) {
+            this.game.state.start(this.selectedArena, true, false, {
+                name: this.playerName,
+                character: this.character,
+                team: this.selectedTeam,
+                playerScores: message.playerScores
+            });
+        };
+        ArenaSelection.prototype.addArenaContainer = function (element, x, y) {
+            this.icon = this.game.add.sprite((x) * 2, (y) * 2, 'arenaIcons', element.icon);
+            var container = this.game.add.group();
+            container.scale.set(2);
+            container.create(x, y, 'uiAtlas', 'frame_top_left.png');
+            container.create(x + 32, y, 'uiAtlas', 'frame_top_right.png');
+            container.create(x, y + 32, 'uiAtlas', 'frame_bottom_left.png');
+            container.create(x + 32, y + 32, 'uiAtlas', 'frame_bottom_right.png');
+            // description Container
+            var descriptionContainer = this.game.add.group();
+            descriptionContainer.fixedToCamera = true;
+            descriptionContainer.scale.set(2);
+            descriptionContainer.create(x - 50, y + 80, 'uiAtlas', 'containerBorderRadiusBegin.png');
+            var content = this.add.tileSprite(x + 32 - 50, y + 80, 100, 64, 'uiAtlas', 'containerBorderRadius.png');
+            descriptionContainer.add(content);
+            descriptionContainer.create(x + 32 + 100 - 50, y + 80, 'uiAtlas', 'containerBorderRadiusEnd.png');
+            this.description = this.textLine((x - 50 + 32 + 25) * 2, (y + 80 + 14) * 2, element.desc, 15, content);
+        };
+        ArenaSelection.prototype.textLine = function (x, y, text, size, wordWrapWidth) {
+            var font = 12;
+            if (size) {
+                font = size;
+            }
+            var text = this.game.add.text(x, y, text, { font: font + "px Arial", fill: "#ffffff",
+                wordWrap: true, wordWrapWidth: wordWrapWidth, align: "center" });
+            text.stroke = '#000000';
+            text.strokeThickness = 2;
+            return text;
+        };
+        return ArenaSelection;
+    }(Phaser.State));
+    Rwg.ArenaSelection = ArenaSelection;
+})(Rwg || (Rwg = {}));
+/// <reference path="../core/enums/MessageType.ts" />
+/// <reference path="../characters/CharacterSelecter.ts" />
+var Rwg;
+(function (Rwg) {
+    var GameOver = (function (_super) {
+        __extends(GameOver, _super);
+        function GameOver() {
+            _super.apply(this, arguments);
+        }
+        GameOver.prototype.init = function (gameover) {
+            this.arena = gameover.arena;
+            this.player = gameover.player;
+            this.leaderBoard = gameover.leaderBoard;
+            this.winner = gameover.winner;
+        };
+        GameOver.prototype.create = function () {
+            var y = 10;
+            for (var i = 0; i < this.leaderBoard.length; i++) {
+                var score = this.leaderBoard[i].kill + " / " + this.leaderBoard[i].assist + " / " + this.leaderBoard[i].death;
+                this.addContainer(y, score, this.leaderBoard[i].character + ".jpg");
+                y += 70;
+            }
+            this.game.world.setBounds(0, 0, 800, (y + 10) * 2);
+            // movement cursor up
+            var up = this.game.input.keyboard.addKey(Phaser.KeyCode.W);
+            up.onHoldCallback = function () {
+                this.game.camera.y -= 4;
+            }.bind(this);
+            // down
+            var down = this.game.input.keyboard.addKey(Phaser.KeyCode.S);
+            down.onHoldCallback = function () {
+                this.game.camera.y += 4;
+            }.bind(this);
+            // submit button
+            this.game.input.keyboard.removeKeyCapture(13);
+            var submit = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
+            submit.onDown.add(function () {
+                this.game.input.keyboard.onPressCallback = null;
+                this.game.state.start('CharSelection', true, false, {
+                    name: this.player.name
+                });
+            }, this);
+        };
+        GameOver.prototype.addContainer = function (y, score, icon) {
+            var container = this.game.add.group();
+            container.scale.set(2);
+            container.create(100 - 32, y, 'uiAtlas', 'containerBorderRadiusBegin.png');
+            var content = this.add.tileSprite(100, y, 200, 64, 'uiAtlas', 'containerBorderRadius.png');
+            container.add(content);
+            container.create(100 + 200, y, 'uiAtlas', 'containerBorderRadiusEnd.png');
+            var icon = this.game.add.sprite((100 + 5) * 2, (y + 15) * 2, 'charIcons', icon);
+            description;
+            Text;
+            var description = this.game.add.group();
+            var descriptionText = this.textLine(0, 0, score, 16, content.width * 2);
+            descriptionText.x = Math.floor(content.x + content.width / 2) * 2;
+            descriptionText.y = Math.floor(content.y + content.height / 2) * 2;
+            descriptionText.anchor.set(0.5);
+            description.add(descriptionText);
+        };
+        GameOver.prototype.textLine = function (x, y, text, size, wordWrapWidth) {
+            var font = 12;
+            if (size) {
+                font = size;
+            }
+            var text = this.game.add.text(x, y, text, { font: font + "px Arial", fill: "#ffffff",
+                wordWrap: true, wordWrapWidth: wordWrapWidth, align: "center" });
+            text.stroke = '#000000';
+            text.strokeThickness = 2;
+            return text;
+        };
+        return GameOver;
+    }(Phaser.State));
+    Rwg.GameOver = GameOver;
+})(Rwg || (Rwg = {}));
+var Rwg;
+(function (Rwg) {
+    (function (FacingPositions) {
+        FacingPositions[FacingPositions["LEFT"] = 1] = "LEFT";
+        FacingPositions[FacingPositions["RIGHT"] = 2] = "RIGHT";
+        FacingPositions[FacingPositions["UP"] = 3] = "UP";
+        FacingPositions[FacingPositions["DOWN"] = 4] = "DOWN";
+    })(Rwg.FacingPositions || (Rwg.FacingPositions = {}));
+    var FacingPositions = Rwg.FacingPositions;
+    ;
+})(Rwg || (Rwg = {}));
+var Rwg;
+(function (Rwg) {
+    (function (CollisionCategory) {
+        CollisionCategory[CollisionCategory["WALL"] = parseInt('000010', 2)] = "WALL";
+        CollisionCategory[CollisionCategory["TEAM_ONE_HITBOX"] = parseInt('001000', 2)] = "TEAM_ONE_HITBOX";
+        CollisionCategory[CollisionCategory["TEAM_ZERO_HITBOX"] = parseInt('000100', 2)] = "TEAM_ZERO_HITBOX";
+        CollisionCategory[CollisionCategory["ATTACK"] = parseInt('010000', 2)] = "ATTACK";
+        CollisionCategory[CollisionCategory["CHAR_BODY"] = parseInt('100000', 2)] = "CHAR_BODY";
+    })(Rwg.CollisionCategory || (Rwg.CollisionCategory = {}));
+    var CollisionCategory = Rwg.CollisionCategory;
+    ;
+})(Rwg || (Rwg = {}));
+/// <reference path="../enums/FacingPositions.ts" />
+/// <reference path="../enums/CollisionCategory.ts" />
+var Rwg;
+(function (Rwg) {
+    var BaseChar = (function (_super) {
+        __extends(BaseChar, _super);
+        /* Sprite properties
+        *
+        *  name: character identification
+        *
+        */
+        function BaseChar(game, name, atlasName, framesPerMovement, scale) {
+            _super.call(this, game, 80, 80, atlasName);
+            this.name = name;
             this.frameName = 'standDown.png';
             this.anchor.setTo(0.5, 0.5);
-            this.scale.setTo(2, 2);
             this.game.add.existing(this);
-            // init attack and skill sets
-            this.activeAttack = this.game.add.physicsGroup();
-            this.skills = {};
-            this.attacks = {};
-            this.skillSlots = {};
-            // update methods for checking hits
             this.updateMethods = {};
-            this.updateMethods['hitTheUserPlayer'] = function () {
-                this.game.physics.arcade.overlap(this.activeAttack, this.game.userPlayer, this.hitUserPlayer, this.userPlayerIsInMyTeam, this);
+            //enable physics
+            this.game.physics.box2d.enable(this);
+            this.body.clearFixtures();
+            if (scale) {
+                this.scale.setTo(scale);
+            }
+            // the body fixture to handle collisions with elements
+            this.collisionHitbox = this.body.addRectangle(Math.floor(this.width / 2), Math.floor(this.height / 2), 0, Math.floor(this.height / 4));
+            this.collisionHitbox.m_filter.maskBits = Rwg.CollisionCategory.WALL | Rwg.CollisionCategory.CHAR_BODY;
+            this.collisionHitbox.m_filter.categoryBits = Rwg.CollisionCategory.CHAR_BODY;
+            this.damageHitbox = this.body.addRectangle(this.width, this.height, 0, 0);
+            this.body.fixedRotation = true;
+            this.body.linearDamping = 10;
+            //Movement Settings
+            this.holdSpeed = false;
+            this.maxSpeed = 0;
+            this.directionX = 0;
+            this.directionY = 0;
+            // speed update method
+            this.updateMethods['speedUpdateMethod'] = function () {
+                if (this.holdSpeed) {
+                    this.body.mass = this.dinamicMass;
+                    if (Math.abs(this.body.velocity.x) < this.maxSpeed) {
+                        this.body.velocity.x = this.body.velocity.x + (100 * this.directionX);
+                    }
+                    else {
+                        this.body.velocity.x = this.maxSpeed * this.directionX;
+                    }
+                    if (Math.abs(this.body.velocity.y) < this.maxSpeed) {
+                        this.body.velocity.y = this.body.velocity.y + (100 * this.directionY);
+                    }
+                    else {
+                        this.body.velocity.y = this.maxSpeed * this.directionY;
+                    }
+                }
+                else {
+                    this.body.mass = this.staticMass;
+                }
             }.bind(this);
-            this.updateMethods['hitAFoePlayer'] = function () {
-                this.game.physics.arcade.overlap(this.activeAttack, this.game.foePlayers, this.hitAFoe, this.hitMyselfCheck, this);
+            // movement animations
+            var moveRightFrames = [];
+            var moveLeftFrames = [];
+            var moveUpFrames = [];
+            var moveDownFrames = [];
+            for (var i = 1; i <= framesPerMovement; i++) {
+                moveRightFrames.push('moveRight' + i + '.png');
+                moveLeftFrames.push('moveLeft' + i + '.png');
+                moveUpFrames.push('moveUp' + i + '.png');
+                moveDownFrames.push('moveDown' + i + '.png');
+            }
+            var moveRight = this.animations.add('moveRight', moveRightFrames, 16, true);
+            var moveLeft = this.animations.add('moveLeft', moveLeftFrames, 16, true);
+            var moveUp = this.animations.add('moveUp', moveUpFrames, 16, true);
+            var moveDown = this.animations.add('moveDown', moveDownFrames, 16, true);
+            // holds who hitted this player
+            this.hittedStack = [];
+            // Health Settings
+            this.maxHP = 1;
+            this.currentHP = 1;
+            this.regenHPperSec = 0.1;
+            this.maxMP = 1;
+            this.currentMP = 1;
+            this.regenMPperSec = 0.1;
+            this.healthRestorationTime = 0;
+            this.updateMethods['healthRestorationTime'] = function () {
+                if (this.maxHP == this.currentHP && this.maxMP == this.currentMP) {
+                    return;
+                }
+                if (this.game.time.now > this.healthRestorationTime) {
+                    if ((this.currentHP + (this.maxHP * this.regenHPperSec)) > this.maxHP) {
+                        this.currentHP = this.maxHP;
+                    }
+                    else {
+                        this.currentHP = this.currentHP + (this.maxHP * this.regenHPperSec);
+                    }
+                    if ((this.currentMP + (this.maxMP * this.regenMPperSec)) > this.maxMP) {
+                        this.currentMP = this.maxMP;
+                    }
+                    else {
+                        this.currentMP = this.currentMP + (this.maxMP * this.regenMPperSec);
+                    }
+                    this.healthRestorationTime = this.game.time.now + 1000;
+                }
             }.bind(this);
-            // this.updateMethods['mapLimits'] = function() {
-            //     if(this.y < 150) {
-            //         this.y  = 150;
-            //     }
-            // }.bind(this);
-            /*
-             * stetic stuff
-             */
-            this.createWalkAnimations();
-            this.FacePositions = { LEFT: 1, RIGHT: 2, UP: 3, DOWN: 4 };
-            // methods for drawing the target circle in the player
-            this.target = this.game.add.sprite(this.x, this.y, 'target');
-            this.target.position = this.position;
-            this.target.visible = false;
-            this.target.anchor.set(0.5, 0.5);
+            this.updateMethods['checkKilled'] = function () {
+                if (this.killed) {
+                    this.moveCharacterToXY(this.respawn.x, this.respawn.y);
+                    this.killed = false;
+                }
+            }.bind(this);
         }
-        Player.prototype.update = function () {
+        BaseChar.prototype.update = function () {
             for (var key in this.updateMethods) {
                 this.updateMethods[key]();
             }
         };
         /*
-         *
-         * GENERIC PLAYER METHODS
-         *
+         *  MOVEMENT METHODS
          */
-        Player.prototype.recieveDamage = function (message) {
-            this.miniLifeBar.updateLifeBar(message.maxHp, message.hp);
-        };
-        Player.prototype.updatePlayerPosition = function (x, y, hp, maxHp) {
+        BaseChar.prototype.moveCharacterToXY = function (x, y) {
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
-            this.x = x;
-            this.y = y;
-            this.animations.stop('rightWalkAnimation', this.frame);
-            this.animations.stop('leftWalkAnimation', this.frame);
-            this.animations.stop('downWalkAnimation', this.frame);
-            this.animations.stop('upWalkAnimation', this.frame);
+            this.speedX = 0;
+            this.speedY = 0;
+            this.body.x = x;
+            this.body.y = y;
+            this.stopMovementAnimation();
+            this.holdSpeed = false;
         };
-        Player.prototype.updatePlayerVelocity = function (velocityX, velocityY, x, y, hp, maxHp) {
-            this.x = x;
-            this.y = y;
-            this.body.velocity.x = velocityX;
-            this.body.velocity.y = velocityY;
-            this.startWalkAnimationBaseOnVelocity();
-        };
-        Player.prototype.destroyPlayer = function () {
-            this.playerNameLabel.destroy();
-            this.destroy();
-            this.miniLifeBar.mark.destroy();
-        };
-        Player.prototype.stopMovement = function () {
-            this.body.velocity.x = 0;
-            this.body.velocity.y = 0;
-            this.MovemenrtControlEnable = false;
-        };
-        /*
-         *
-         *  SETTERS
-         *
-         */
-        Player.prototype.setColor = function (color) {
-            this.color = color;
-            this.tint = color;
-        };
-        Player.prototype.setPlayerId = function (playerId) {
-            this.playerId = playerId;
-            var style = { font: "16px Arial", fill: "#ffffff", wordWrap: true, align: "center" };
-            this.playerNameLabel = this.game.add.text(0, 0, 'Team-' + this.team + ': ' + playerId, style);
-            this.playerNameLabel.anchor.set(0.5, 1.4);
-            this.playerNameLabel.position = this.position;
-        };
-        Player.prototype.setMiniLifeBar = function (ally) {
-            // minilife bar
-            this.miniLifeBar = new Rwg.MiniLifeBar(this.game, ally);
-            this.miniLifeBar.setPosition(this.position);
-        };
-        /*
-         *
-         *  HIT DETECTION METHODS
-         *
-         */
-        Player.prototype.hitUserPlayer = function (userPlayer, hitArea) {
-            userPlayer.takeHit(this.attacks[hitArea.attackName].damage, this.playerId);
-            if (this.attacks[hitArea.attackName].additionalEffect != null) {
-                this.attacks[hitArea.attackName].additionalEffect(userPlayer);
+        BaseChar.prototype.setVelocity = function (x, y, velocityBitMask) {
+            this.body.x = x;
+            this.body.y = y;
+            // set the max velocity
+            this.maxSpeed = this.movementSpeed;
+            var stringBitMask = velocityBitMask.toString(2);
+            if ((stringBitMask.split('1').length - 1) == 2) {
+                this.maxSpeed *= Math.sin(Math.PI / 4);
             }
-            hitArea.kill();
+            // bitmask array manipulation
+            var bitMaskArray = stringBitMask.split('').reverse();
+            var bitMaskIntArray = [];
+            for (var i = 0; i < bitMaskArray.length; i++) {
+                bitMaskIntArray.push(parseInt(bitMaskArray[i]));
+            }
+            // set the directions from the bitmask array
+            this.directionX = 0;
+            this.directionY = 0;
+            if (bitMaskIntArray[0]) {
+                this.directionX = -1;
+            }
+            if (bitMaskIntArray[1]) {
+                this.directionX = 1;
+            }
+            if (bitMaskIntArray[2]) {
+                this.directionY = -1;
+            }
+            if (bitMaskIntArray[3]) {
+                this.directionY = 1;
+            }
+            this.body.velocity.x = this.maxSpeed * this.directionX;
+            this.body.velocity.y = this.maxSpeed * this.directionY;
+            this.startMoveAnimationBaseOnVelocity();
+            this.holdSpeed = true;
         };
-        Player.prototype.hitAFoe = function (hitArea, foePlayer) {
-            hitArea.kill();
-        };
-        Player.prototype.hitMyselfCheck = function (myAttack, attackedPlayer) {
-            return this.playerId != attackedPlayer.playerId;
-        };
-        Player.prototype.userPlayerIsInMyTeam = function (userPlayer, myAttack) {
-            return (this.team != userPlayer.team);
+        BaseChar.prototype.stopMovement = function () {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
         };
         /*
-         *
+         *  DAMAGE
+         */
+        BaseChar.prototype.damage = function (message) {
+            this.killed = message.killed;
+            this.currentHP = message.currentHP;
+        };
+        /*
          *  SPRITE ANIMATION METHODS
-         *
          */
-        Player.prototype.createWalkAnimations = function () {
-            var rightWalkFrames = [];
-            var leftWalkFrames = [];
-            var upWalkFrames = [];
-            var downWalkFrames = [];
-            for (var i = 0; i < 6; i++) {
-                rightWalkFrames.push('walkRight' + (i + 1) + '.png');
-                leftWalkFrames.push('walkLeft' + (i + 1) + '.png');
-                upWalkFrames.push('walkUp' + (i + 1) + '.png');
-                downWalkFrames.push('walkDown' + (i + 1) + '.png');
-            }
-            var rightWalkAnimation = this.animations.add('rightWalkAnimation', rightWalkFrames, 16, true);
-            var leftWalkAnimation = this.animations.add('leftWalkAnimation', leftWalkFrames, 16, true);
-            var downWalkAnimation = this.animations.add('downWalkAnimation', downWalkFrames, 16, true);
-            var upWalkAnimation = this.animations.add('upWalkAnimation', upWalkFrames, 16, true);
-        };
-        Player.prototype.startWalkAnimationBaseOnVelocity = function () {
+        BaseChar.prototype.startMoveAnimationBaseOnVelocity = function () {
             switch (this.getFacingBaseOnVelocity()) {
-                case this.FacePositions.RIGHT:
-                    this.play('rightWalkAnimation');
+                case Rwg.FacingPositions.RIGHT:
+                    this.play('moveRight');
                     break;
-                case this.FacePositions.LEFT:
-                    this.play('leftWalkAnimation');
+                case Rwg.FacingPositions.LEFT:
+                    this.play('moveLeft');
                     break;
-                case this.FacePositions.UP:
-                    this.play('upWalkAnimation');
+                case Rwg.FacingPositions.UP:
+                    this.play('moveUp');
                     break;
-                case this.FacePositions.DOWN:
-                    this.play('downWalkAnimation');
+                case Rwg.FacingPositions.DOWN:
+                    this.play('moveDown');
             }
         };
-        Player.prototype.getFacingBaseOnVelocity = function () {
+        BaseChar.prototype.stopMovementAnimation = function () {
+            this.animations.stop('moveRight', this.frame);
+            this.animations.stop('moveLeft', this.frame);
+            this.animations.stop('moveUp', this.frame);
+            this.animations.stop('moveDown', this.frame);
+            this.changeFacingBaseOnFrame();
+        };
+        /*
+         *  UTIL METHODS
+         */
+        BaseChar.prototype.getFacingBaseOnVelocity = function () {
             if (this.body.velocity.x > 0) {
-                return this.FacePositions.RIGHT;
+                return Rwg.FacingPositions.RIGHT;
             }
             else if (this.body.velocity.x < 0) {
-                return this.FacePositions.LEFT;
+                return Rwg.FacingPositions.LEFT;
             }
             else if (this.body.velocity.y > 0) {
-                return this.FacePositions.DOWN;
+                return Rwg.FacingPositions.DOWN;
             }
             else if (this.body.velocity.y < 0) {
-                return this.FacePositions.UP;
+                return Rwg.FacingPositions.UP;
             }
         };
-        Player.prototype.changeSightPositionToPoint = function (x, y) {
-            switch (this.getSightPositionToPoint(x, y)) {
-                case this.FacePositions.RIGHT:
-                    this.frameName = 'standRight.png';
-                    break;
-                case this.FacePositions.LEFT:
-                    this.frameName = 'standLeft.png';
-                    break;
-                case this.FacePositions.UP:
-                    this.frameName = 'standUp.png';
-                    break;
-                case this.FacePositions.DOWN:
-                    this.frameName = 'standDown.png';
-            }
-        };
-        Player.prototype.getSightPositionToPoint = function (x, y) {
+        BaseChar.prototype.getFacingBaseOnPoint = function (x, y) {
             var horizontalDiff = x - this.x;
             var verticalDiff = y - this.y;
             if (horizontalDiff > 0 && Math.abs(horizontalDiff) > Math.abs(verticalDiff)) {
-                return this.FacePositions.RIGHT;
+                return Rwg.FacingPositions.RIGHT;
             }
             else if (horizontalDiff < 0 && Math.abs(horizontalDiff) > Math.abs(verticalDiff)) {
-                return this.FacePositions.LEFT;
+                return Rwg.FacingPositions.LEFT;
             }
             else if (verticalDiff > 0 && Math.abs(horizontalDiff) < Math.abs(verticalDiff)) {
-                return this.FacePositions.DOWN;
+                return Rwg.FacingPositions.DOWN;
             }
             else if (verticalDiff < 0 && Math.abs(horizontalDiff) < Math.abs(verticalDiff)) {
-                return this.FacePositions.UP;
+                return Rwg.FacingPositions.UP;
             }
             else if (horizontalDiff > 0 && Math.abs(horizontalDiff) == Math.abs(verticalDiff)) {
-                return this.FacePositions.RIGHT;
+                return Rwg.FacingPositions.RIGHT;
             }
             else if (horizontalDiff < 0 && Math.abs(horizontalDiff) == Math.abs(verticalDiff)) {
-                return this.FacePositions.LEFT;
+                return Rwg.FacingPositions.LEFT;
             }
         };
-        Player.prototype.getPointsBaseOnFrame = function () {
+        BaseChar.prototype.changeFacingBaseOnFrame = function () {
+            if (/Right/.test(this.frameName)) {
+                this.frameName = 'standRight.png';
+                return;
+            }
+            if (/Left/.test(this.frameName)) {
+                this.frameName = 'standLeft.png';
+                return;
+            }
+            if (/Up/.test(this.frameName)) {
+                this.frameName = 'standUp.png';
+                return;
+            }
+            // default
+            this.frameName = 'standDown.png';
+        };
+        BaseChar.prototype.getAheadPointBaseOnCurrentFrame = function () {
             if (/Right/.test(this.frameName)) {
                 return new Phaser.Point(this.x + 10, this.y);
             }
@@ -415,324 +910,90 @@ var Rwg;
             if (/Up/.test(this.frameName)) {
                 return new Phaser.Point(this.x, this.y - 10);
             }
-            if (/Down/.test(this.frameName)) {
-                return new Phaser.Point(this.x, this.y + 10);
-            }
+            // default
+            return new Phaser.Point(this.x, this.y + 10);
         };
-        return Player;
+        return BaseChar;
     }(Phaser.Sprite));
-    Rwg.Player = Player;
+    Rwg.BaseChar = BaseChar;
 })(Rwg || (Rwg = {}));
 var Rwg;
 (function (Rwg) {
-    var LifeBar = (function (_super) {
-        __extends(LifeBar, _super);
-        function LifeBar(game) {
-            _super.call(this, game, 0, 0);
-            this.life = this.game.add.graphics(250, 560);
-            this.life.beginFill(0xff0000);
-            this.life.drawRect(0, 0, 300, 30);
-            this.life.fixedToCamera = true;
-            this.leftMark = this.game.add.graphics(250, 560);
-            this.leftMark.beginFill(0x000000);
-            this.leftMark.drawRect(0, 0, 5, 30);
-            this.leftMark.fixedToCamera = true;
-            this.rightMark = this.game.add.graphics(545, 560);
-            this.rightMark.beginFill(0x000000);
-            this.rightMark.drawRect(0, 0, 5, 30);
-            this.rightMark.fixedToCamera = true;
-            this.topMark = this.game.add.graphics(250, 560);
-            this.topMark.beginFill(0x000000);
-            this.topMark.drawRect(0, 0, 300, 5);
-            this.topMark.fixedToCamera = true;
-            this.bottomMark = this.game.add.graphics(250, 585);
-            this.bottomMark.beginFill(0x000000);
-            this.bottomMark.drawRect(0, 0, 300, 5);
-            this.bottomMark.fixedToCamera = true;
-            var style = { font: "16px Arial", fill: "#ffffff", align: "center" };
-            this.hipointsDisplay = this.game.add.text(400, 575, 'HP : ', style);
-            this.hipointsDisplay.anchor.set(0.5, 0.4);
-            this.hipointsDisplay.fixedToCamera = true;
-        }
-        LifeBar.prototype.updateLifeBar = function (maxHp, currentHp) {
-            this.hipointsDisplay.text = currentHp + '/' + maxHp;
-            var width = (currentHp * 300) / maxHp;
-            this.life.width = width;
-        };
-        return LifeBar;
-    }(Phaser.Graphics));
-    Rwg.LifeBar = LifeBar;
+    (function (SkillTypes) {
+        SkillTypes[SkillTypes["TARGET"] = 0] = "TARGET";
+        SkillTypes[SkillTypes["AREA"] = 1] = "AREA";
+        SkillTypes[SkillTypes["SELF"] = 2] = "SELF";
+    })(Rwg.SkillTypes || (Rwg.SkillTypes = {}));
+    var SkillTypes = Rwg.SkillTypes;
+    ;
 })(Rwg || (Rwg = {}));
 var Rwg;
 (function (Rwg) {
-    var SkillSlot = (function () {
-        function SkillSlot(game, player, index) {
-            this.size = 60;
-            this.refreshTime = 0;
-            this.refreshRate = 120;
-            this.game = game;
-            this.player = player;
-            if (this.player.isUserPlayer) {
-                this.slot = this.game.add.graphics(250 + (this.size * index), 500);
-                this.slot.beginFill(0x000000);
-                this.slot.drawRect(0, 0, this.size, this.size);
-                this.slot.fixedToCamera = true;
-            }
+    (function (MovementVectorsBitMask) {
+        MovementVectorsBitMask[MovementVectorsBitMask["NOT_DEF_1"] = parseInt('0011', 2)] = "NOT_DEF_1";
+        MovementVectorsBitMask[MovementVectorsBitMask["NOT_DEF_2"] = parseInt('1100', 2)] = "NOT_DEF_2";
+    })(Rwg.MovementVectorsBitMask || (Rwg.MovementVectorsBitMask = {}));
+    var MovementVectorsBitMask = Rwg.MovementVectorsBitMask;
+    ;
+    (function (KeysBitMask) {
+        KeysBitMask[KeysBitMask["A"] = parseInt('0001', 2)] = "A";
+        KeysBitMask[KeysBitMask["D"] = parseInt('0010', 2)] = "D";
+        KeysBitMask[KeysBitMask["W"] = parseInt('0100', 2)] = "W";
+        KeysBitMask[KeysBitMask["S"] = parseInt('1000', 2)] = "S";
+    })(Rwg.KeysBitMask || (Rwg.KeysBitMask = {}));
+    var KeysBitMask = Rwg.KeysBitMask;
+    ;
+})(Rwg || (Rwg = {}));
+/// <reference path="../super/BaseChar.ts" />
+/// <reference path="../enums/MessageType.ts" />
+/// <reference path="../enums/ MovementVectors.ts" />
+var Rwg;
+(function (Rwg) {
+    var MovementControlProvider = (function () {
+        function MovementControlProvider() {
         }
-        SkillSlot.prototype.render = function () {
-            if (this.player.isUserPlayer) {
-                this.slotBlackBackground = this.game.add.graphics(5, 5);
-                this.slotBlackBackground.beginFill(0x000000);
-                this.slotBlackBackground.drawRect(0, 0, 50, 50);
-                this.slot.addChild(this.slotBlackBackground);
-                this.icon = this.game.add.sprite(5, 5, this.iconName + 'Icon');
-                this.icon.inputEnabled = true;
-                this.icon.selected = false;
-                this.slot.addChild(this.icon);
-                this.slotCover = this.game.add.graphics(5, 5);
-                this.slotCover.alpha = 0.8;
-                this.slotCover.beginFill(0x000000);
-                this.slotCover.width = 0;
-                this.slotCover.drawRect(0, 0, 50, 50);
-                this.slot.addChild(this.slotCover);
-                this.widthDecrement = 50 / (this.coolDown / this.refreshRate);
-                this.player.updateMethods[this.iconName + 'resetAnimation'] = function () {
-                    if (this.slotCover.width > 0) {
-                        if (this.refreshTime < this.game.time.now) {
-                            this.slotCover.width -= this.widthDecrement;
-                            if (this.slotCover.width < 0) {
-                                this.slotCover.width = 0;
-                            }
-                            ;
-                            this.refreshTime = this.game.time.now + this.refreshRate;
+        MovementControlProvider.prototype.provide = function (character) {
+            character.movementControlEnable = true;
+            character.movementControlEnableBefore = true;
+            character.initCharMovementControls = this.initCharMovementControls.bind(character);
+            character.movementKeysOnDown = this.movementKeysOnDown.bind(character);
+            character.movementKeysOnUp = this.movementKeysOnUp.bind(character);
+            character.setVelocityForKey = this.setVelocityForKey.bind(character);
+            character.sendUpdateCharPosition = this.sendUpdateCharPosition.bind(character);
+            character.sendUpdateCharVelocity = this.sendUpdateCharVelocity.bind(character);
+            character.initCharMovementControls();
+            // add listener for the change in movementControlEnable
+            character.updateMethods['movementControlEnableListener'] = function () {
+                if (this.movementControlEnableBefore != character.movementControlEnable) {
+                    this.movementControlEnableBefore = character.movementControlEnable;
+                    if (character.movementControlEnable) {
+                        if (this.keyStack.length != 0) {
+                            this.setVelocityForKey(this.keyStack[this.keyStack.length - 1]);
                         }
                     }
-                }.bind(this);
-            }
-        };
-        SkillSlot.prototype.mark = function () {
-            if (this.player.isUserPlayer) {
-                for (key in this.player.skillSlots) {
-                    this.player.skillSlots[key].unMark();
                 }
-                this.slot.fillColor = 0XF0FFFF;
-                this.slot.drawRect(0, 0, this.size, this.size);
-            }
+            }.bind(character);
         };
-        SkillSlot.prototype.unMark = function () {
-            if (this.player.isUserPlayer) {
-                this.slot.fillColor = 0X000000;
-                this.slot.drawRect(0, 0, this.size, this.size);
-            }
-        };
-        SkillSlot.prototype.use = function () {
-            if (this.player.isUserPlayer) {
-                this.refreshTime = this.game.time.now + this.refreshRate;
-                this.slotCover.width = 50;
-            }
-        };
-        return SkillSlot;
-    }());
-    Rwg.SkillSlot = SkillSlot;
-})(Rwg || (Rwg = {}));
-/// <reference path="Player.ts" />
-/// <reference path="../ui/LifeBar.ts" />
-/// <reference path="../ui/SkillSlot.ts" />
-/// <reference path="../ui/MiniLifeBar.ts" />
-var Rwg;
-(function (Rwg) {
-    var UserPlayer = (function (_super) {
-        __extends(UserPlayer, _super);
-        function UserPlayer(game, x, y) {
-            _super.call(this, game, x, y);
-            this.hits = 0;
-            this.maxHitPoints = 50;
-            this.hitPoints = 50;
-            this.score = 0;
-            // super important for hit detection
-            this.game.physics.arcade.enable(this);
-            this.body.collideWorldBounds = true;
-            // delete this updateMethod wince it is not requiered for the userPlayer
-            delete this.updateMethods['hitTheUserPlayer'];
-            // update method only for user player
-            this.updateMethods['leftClickAttack'] = function () {
-                if (this.game.input.activePointer.leftButton.isDown && this.currentLeftClickAction != null) {
-                    this.currentLeftClickAction();
-                }
-            }.bind(this);
-            // skills target mechanics
-            this.targetsOver = [];
-            this.maxTargetsSelected = 0;
-            game.input.keyboard.removeKeyCapture([Phaser.KeyCode.ESC]);
-            var esc = game.input.keyboard.addKey(Phaser.KeyCode.ESC);
-            esc.onDown.add(this.escKeyDown, this);
-            // this.leaderBoard = new LeaderBoard(this.game, this.playerId);
-            this.lifeBar = new Rwg.LifeBar(this.game);
-            this.lifeBar.updateLifeBar(this.maxHitPoints, this.hitPoints);
-            // enables the keyboard inputs for the user player
-            this.game.input.keyboard.addCallbacks(this, this.keyDownCallBack, this.keyUpCallBack, null);
-            // for attack control porpoises 
-            this.defaultLeftClickAction = null;
-            this.currentLeftClickAction = null;
-            this.lastActiveAttack = null;
-            this.activeTargetSkill = null;
-            this.activeClickOnMapSkill = null;
-            this.keyDownInputMethods = {};
-            this.keyUpInputMethods = {};
-            this.keyStack = [];
-        }
-        // skills mechanics for player
-        UserPlayer.prototype.targetOver = function (player) {
-            if (this.activeTargetSkill && this.targetsOver.length < this.maxTargetsSelected) {
-                if (this.activeTargetSkill.targetOnAlly) {
-                    if (player.team == this.team && !player.target.visible) {
-                        this.targetsOver.push(player);
-                        player.target.visible = true;
-                    }
-                }
-                else {
-                    if (player.team != this.team && !player.target.visible) {
-                        this.targetsOver.push(player);
-                        player.target.visible = true;
-                    }
-                }
-            }
-        };
-        UserPlayer.prototype.releaseTargetSkill = function () {
-            if (this.activeTargetSkill) {
-                for (var i = 0; i < this.targetsOver.length; i++) {
-                    this.targetsOver[i].target.visible = false;
-                }
-                this.targetsOver = [];
-                this.activeTargetSkill.casting = false;
-                this.activeTargetSkill = null;
-                // set back the last attack player was using
-                this.currentLeftClickAction = null;
-                setTimeout(function () {
-                    this.currentLeftClickAction = this.attacks[this.lastActiveAttack].triggerAttack;
-                    this.skillSlots[this.lastActiveAttack].mark();
-                }.bind(this), 500);
-            }
-        };
-        UserPlayer.prototype.addTargetable = function (newPlayer) {
-            newPlayer.events.onInputOver.add(this.targetOver, this);
-            newPlayer.inputEnabled = true;
-        };
-        // click on map skills
-        UserPlayer.prototype.releaseClickOnMapSkill = function () {
-            if (this.activeClickOnMapSkill) {
-                this.activeClickOnMapSkill.casting = false;
-                this.activeClickOnMapSkill = null;
-                // set back the last attack player was using
-                this.currentLeftClickAction = null;
-                setTimeout(function () {
-                    this.currentLeftClickAction = this.attacks[this.lastActiveAttack].triggerAttack;
-                    this.skillSlots[this.lastActiveAttack].mark();
-                }.bind(this), 500);
-            }
-        };
-        // escape key
-        UserPlayer.prototype.escKeyDown = function () {
-            this.releaseTargetSkill();
-            this.releaseClickOnMapSkill();
-        };
-        // player life checkers
-        UserPlayer.prototype.takeHit = function (damage, playerId) {
-            this.hitPoints -= damage;
-            if (this.hitPoints <= 0) {
-                this.sendPlayerKill(playerId);
-            }
-            this.lifeBar.updateLifeBar(this.maxHitPoints, this.hitPoints);
-            this.game.ws.send({
-                playerId: this.playerId,
-                maxHp: this.maxHitPoints,
-                hp: this.hitPoints,
-                type: 'takeDamage'
-            });
-        };
-        UserPlayer.prototype.sendPlayerKill = function (playerId) {
-            this.game.ws.send({
-                killedPlayer: this.playerId,
-                killedBy: playerId,
-                type: 'playerKilled'
-            });
-            this.sendUpdatePlayerPosition(80, 80);
-            // restore the player hitpoints
-            this.hitPoints = 50;
-        };
-        UserPlayer.prototype.addAKill = function () {
-            this.score++;
-            // this.scoreDisplay.text = 'Score : ' + this.score;
-        };
-        UserPlayer.prototype.continueMovement = function () {
-            this.MovemenrtControlEnable = true;
-            if (this.keyStack.length != 0) {
-                this.setVelocityForKey(this.keyStack[this.keyStack.length - 1]);
-            }
-        };
-        UserPlayer.prototype.keyDownCallBack = function (event) {
-            for (var key in this.keyDownInputMethods) {
-                this.keyDownInputMethods[key](event);
-            }
-        };
-        UserPlayer.prototype.keyUpCallBack = function (event) {
-            for (var key in this.keyUpInputMethods) {
-                this.keyUpInputMethods[key](event);
-            }
-        };
-        return UserPlayer;
-    }(Rwg.Player));
-    Rwg.UserPlayer = UserPlayer;
-})(Rwg || (Rwg = {}));
-/// <reference path="Player.ts" />
-var Rwg;
-(function (Rwg) {
-    var PlayerMovementControls = (function () {
-        function PlayerMovementControls(speed) {
-            this.movementSpeed = speed;
-        }
-        PlayerMovementControls.prototype.provide = function (player) {
-            player.movementSpeed = this.movementSpeed;
-            player.MovemenrtControlEnable = true;
-            player.initPlayerMovementControls = this.initPlayerMovementControls.bind(player);
-            player.movementKeysOnDown = this.movementKeysOnDown.bind(player);
-            player.movementKeysOnUp = this.movementKeysOnUp.bind(player);
-            player.setVelocityForKey = this.setVelocityForKey.bind(player);
-            player.sendUpdatePlayerPosition = this.sendUpdatePlayerPosition.bind(player);
-            player.sendUpdatePlayerVelocity = this.sendUpdatePlayerVelocity.bind(player);
-            player.getSignOfYVelocity = this.getSignOfYVelocity.bind(player);
-            player.getSignOfXVelocity = this.getSignOfXVelocity.bind(player);
-            player.initPlayerMovementControls();
-        };
-        PlayerMovementControls.prototype.initPlayerMovementControls = function () {
-            // the factor to have the right speed when move in diagonal
-            this.velocityComponent = Math.sin(Math.PI / 4);
+        MovementControlProvider.prototype.initCharMovementControls = function () {
             // this is not an stack at all since we are removing randomly, but the idea is to 
             // maintain the input order
             this.keyStack = new Array();
             this.movementKeys = [Phaser.KeyCode.A, Phaser.KeyCode.D, Phaser.KeyCode.W, Phaser.KeyCode.S];
             this.game.input.keyboard.addCallbacks(this, this.movementKeysOnDown, this.movementKeysOnUp, null);
-            // adds the movement key capture methods to the key up and down methods list
-            this.keyDownInputMethods['movementKeysOnDown'] = function (event) {
-                this.movementKeysOnDown(event);
-            }.bind(this);
-            this.keyUpInputMethods['movementKeysOnUp'] = function (event) {
-                this.movementKeysOnUp(event);
-            }.bind(this);
         };
-        PlayerMovementControls.prototype.movementKeysOnDown = function (event) {
+        MovementControlProvider.prototype.movementKeysOnDown = function (event) {
             var keyCode = event.keyCode;
             if (this.movementKeys.indexOf(keyCode) != -1 && this.keyStack.indexOf(keyCode) == -1) {
                 this.keyStack.push(event.keyCode);
                 this.setVelocityForKey(event.keyCode);
             }
         };
-        PlayerMovementControls.prototype.movementKeysOnUp = function (event) {
+        MovementControlProvider.prototype.movementKeysOnUp = function (event) {
             var keyCode = event.keyCode;
             if (this.movementKeys.indexOf(keyCode) != -1) {
                 this.keyStack.splice(this.keyStack.indexOf(event.keyCode), 1);
-                if (this.keyStack.length == 0) {
-                    this.sendUpdatePlayerPosition(this.x, this.y);
+                if (this.keyStack.length == 0 && this.movementControlEnable) {
+                    this.sendUpdateCharPosition();
                 }
                 else {
                     // tops the last input
@@ -740,259 +1001,459 @@ var Rwg;
                 }
             }
         };
-        PlayerMovementControls.prototype.setVelocityForKey = function (keyCode) {
+        MovementControlProvider.prototype.setVelocityForKey = function (keyCode) {
             // the keyStack continues doing the stacking, but the movement is not performed
-            if (!this.MovemenrtControlEnable) {
+            if (!this.movementControlEnable) {
                 return;
             }
-            var keySign = 1;
-            if (keyCode == Phaser.KeyCode.A || keyCode == Phaser.KeyCode.W) {
-                keySign = -1;
+            var lastKeyPressBitMask = null;
+            switch (keyCode) {
+                case Phaser.KeyCode.A:
+                    lastKeyPressBitMask = Rwg.KeysBitMask.A;
+                    break;
+                case Phaser.KeyCode.D:
+                    lastKeyPressBitMask = Rwg.KeysBitMask.D;
+                    break;
+                case Phaser.KeyCode.W:
+                    lastKeyPressBitMask = Rwg.KeysBitMask.W;
+                    break;
+                case Phaser.KeyCode.S:
+                    lastKeyPressBitMask = Rwg.KeysBitMask.S;
+                    break;
             }
-            if (keyCode == Phaser.KeyCode.A || keyCode == Phaser.KeyCode.D) {
-                if (this.keyStack.indexOf(Phaser.KeyCode.W) != -1 || this.keyStack.indexOf(Phaser.KeyCode.S) != -1) {
-                    this.sendUpdatePlayerVelocity(this.movementSpeed * this.velocityComponent * keySign, this.movementSpeed * this.velocityComponent * this.getSignOfYVelocity());
+            var movementVectorsBitMask = lastKeyPressBitMask;
+            // if there is another key pressed
+            if (this.keyStack.length > 1) {
+                var secondToLastPressKeyBitMask = null;
+                switch (this.keyStack[this.keyStack.length - 2]) {
+                    case Phaser.KeyCode.A:
+                        secondToLastPressKeyBitMask = Rwg.KeysBitMask.A;
+                        break;
+                    case Phaser.KeyCode.D:
+                        secondToLastPressKeyBitMask = Rwg.KeysBitMask.D;
+                        break;
+                    case Phaser.KeyCode.W:
+                        secondToLastPressKeyBitMask = Rwg.KeysBitMask.W;
+                        break;
+                    case Phaser.KeyCode.S:
+                        secondToLastPressKeyBitMask = Rwg.KeysBitMask.S;
+                        break;
                 }
-                else {
-                    this.sendUpdatePlayerVelocity(this.movementSpeed * keySign, 0);
+                var result = lastKeyPressBitMask | secondToLastPressKeyBitMask;
+                if (result != Rwg.MovementVectorsBitMask.NOT_DEF_1 && result != Rwg.MovementVectorsBitMask.NOT_DEF_2) {
+                    movementVectorsBitMask = result;
                 }
             }
-            else if (keyCode == Phaser.KeyCode.W || keyCode == Phaser.KeyCode.S) {
-                if (this.keyStack.indexOf(Phaser.KeyCode.A) != -1 || this.keyStack.indexOf(Phaser.KeyCode.D) != -1) {
-                    this.sendUpdatePlayerVelocity(this.movementSpeed * this.velocityComponent * this.getSignOfXVelocity(), this.movementSpeed * this.velocityComponent * keySign);
-                }
-                else {
-                    this.sendUpdatePlayerVelocity(0, this.movementSpeed * keySign);
-                }
-            }
+            this.sendUpdateCharVelocity(movementVectorsBitMask);
         };
-        PlayerMovementControls.prototype.getSignOfYVelocity = function () {
-            if (this.body.velocity.y != 0) {
-                return Math.sign(this.body.velocity.y);
-            }
-            else {
-                var indexOfW = this.keyStack.indexOf(Phaser.KeyCode.W);
-                var indexOfS = this.keyStack.indexOf(Phaser.KeyCode.S);
-                if (indexOfW > indexOfS) {
-                    return -1;
-                }
-                else {
-                    return 1;
-                }
-            }
-        };
-        PlayerMovementControls.prototype.getSignOfXVelocity = function () {
-            if (this.body.velocity.x != 0) {
-                return Math.sign(this.body.velocity.x);
-            }
-            else {
-                var indexOfA = this.keyStack.indexOf(Phaser.KeyCode.A);
-                var indexOfD = this.keyStack.indexOf(Phaser.KeyCode.D);
-                if (indexOfA > indexOfD) {
-                    return -1;
-                }
-                else {
-                    return 1;
-                }
-            }
-        };
-        PlayerMovementControls.prototype.sendUpdatePlayerPosition = function (x, y) {
+        MovementControlProvider.prototype.sendUpdateCharPosition = function () {
             this.game.ws.send({
-                color: this.color,
-                playerId: this.playerId,
-                x: x,
-                y: y,
-                type: 'updatePlayerPosition',
-                team: this.team,
-                fightType: this.fightType
+                name: this.name,
+                x: Math.floor(this.x),
+                y: Math.floor(this.y),
+                type: Rwg.MessageType.MOVE
             });
-            this.updatePlayerPosition(x, y);
+            this.moveCharacterToXY(this.x, this.y);
         };
-        PlayerMovementControls.prototype.sendUpdatePlayerVelocity = function (x, y) {
+        MovementControlProvider.prototype.sendUpdateCharVelocity = function (velocityBitMask) {
             this.game.ws.send({
-                color: this.color,
-                playerId: this.playerId,
-                velocityX: x,
-                velocityY: y,
-                x: this.x,
-                y: this.y,
-                type: 'updatePlayerVelocity',
-                team: this.team,
-                fightType: this.fightType
+                name: this.name,
+                x: Math.floor(this.x),
+                y: Math.floor(this.y),
+                velocityBitMask: velocityBitMask,
+                type: Rwg.MessageType.VELOCITY
             });
-            this.updatePlayerVelocity(x, y, this.x, this.y);
+            this.setVelocity(this.x, this.y, velocityBitMask);
         };
-        return PlayerMovementControls;
+        return MovementControlProvider;
     }());
-    Rwg.PlayerMovementControls = PlayerMovementControls;
+    Rwg.MovementControlProvider = MovementControlProvider;
 })(Rwg || (Rwg = {}));
-/// <reference path="Player.ts" />
+/// <reference path="../base/BaseChar.ts" />
+/// <reference path="../enums/FacingPositions.ts" />
 var Rwg;
 (function (Rwg) {
-    var PlayerAnimationFactory = (function () {
-        function PlayerAnimationFactory() {
+    var CharAnimFactory = (function () {
+        function CharAnimFactory(args) {
+            this.prefix = args.prefix;
+            this.frames = args.frames;
+            this.framesNumber = args.framesNumber;
             this.upFrames = [];
             this.downFrames = [];
             this.leftFrames = [];
             this.rightFrames = [];
         }
-        PlayerAnimationFactory.prototype.getPlayAnimationTowardsMethod = function (player, attackSpeed) {
-            if (this.singleAnimation) {
-                for (var i = 0; i < this.framesNumber; i++) {
-                    var frameName = this.animId + 'UpDownLeftRight' + (i + 1) + '.png';
-                    this.upFrames.push(frameName);
-                    this.downFrames.push(frameName);
-                    this.leftFrames.push(frameName);
-                    this.rightFrames.push(frameName);
-                }
+        CharAnimFactory.prototype.getPlayAnimationTowardsMethod = function (animId, character, attackSpeed) {
+            if (this.prefix) {
+                return this.getMultipleAnimationMethod(animId, character, attackSpeed);
             }
             else {
-                for (var i = 0; i < this.framesNumber; i++) {
-                    this.upFrames.push(this.animId + 'Up' + (i + 1) + '.png');
-                    this.downFrames.push(this.animId + 'Down' + (i + 1) + '.png');
-                    this.leftFrames.push(this.animId + 'Left' + (i + 1) + '.png');
-                    this.rightFrames.push(this.animId + 'Right' + (i + 1) + '.png');
-                }
+                return this.getSinlgeAnimationMethod(animId, character, attackSpeed);
             }
-            this.createAnimation(player, attackSpeed, this.upFrames, this.animId + 'UpPlayerAnim', this.cancelMovement);
-            this.createAnimation(player, attackSpeed, this.downFrames, this.animId + 'DownPlayerAnim', this.cancelMovement);
-            this.createAnimation(player, attackSpeed, this.leftFrames, this.animId + 'LeftPlayerAnim', this.cancelMovement);
-            this.createAnimation(player, attackSpeed, this.rightFrames, this.animId + 'RightPlayerAnim', this.cancelMovement);
-            var animId = this.animId;
+        };
+        CharAnimFactory.prototype.getSinlgeAnimationMethod = function (animId, character, attackSpeed) {
+            this.createAnimation(character, attackSpeed, this.frames, animId);
             return function (x, y) {
-                switch (this.getSightPositionToPoint(x, y)) {
-                    case this.FacePositions.RIGHT:
-                        this.play(animId + 'RightPlayerAnim');
+                this.play(animId);
+            };
+        };
+        CharAnimFactory.prototype.getMultipleAnimationMethod = function (animId, character, attackSpeed) {
+            for (var i = 0; i < this.framesNumber; i++) {
+                this.upFrames.push(this.prefix + 'Up' + (i + 1) + '.png');
+                this.downFrames.push(this.prefix + 'Down' + (i + 1) + '.png');
+                this.leftFrames.push(this.prefix + 'Left' + (i + 1) + '.png');
+                this.rightFrames.push(this.prefix + 'Right' + (i + 1) + '.png');
+            }
+            this.createAnimation(character, attackSpeed, this.upFrames, animId + 'UpCharAnim');
+            this.createAnimation(character, attackSpeed, this.downFrames, animId + 'DownCharAnim');
+            this.createAnimation(character, attackSpeed, this.leftFrames, animId + 'LeftCharAnim');
+            this.createAnimation(character, attackSpeed, this.rightFrames, animId + 'RightCharAnim');
+            return function (x, y) {
+                switch (this.getFacingBaseOnPoint(x, y)) {
+                    case Rwg.FacingPositions.RIGHT:
+                        this.play(animId + 'RightCharAnim');
                         break;
-                    case this.FacePositions.LEFT:
-                        this.play(animId + 'LeftPlayerAnim');
+                    case Rwg.FacingPositions.LEFT:
+                        this.play(animId + 'LeftCharAnim');
                         break;
-                    case this.FacePositions.UP:
-                        this.play(animId + 'UpPlayerAnim');
+                    case Rwg.FacingPositions.UP:
+                        this.play(animId + 'UpCharAnim');
                         break;
-                    case this.FacePositions.DOWN:
-                        this.play(animId + 'DownPlayerAnim');
+                    case Rwg.FacingPositions.DOWN:
+                        this.play(animId + 'DownCharAnim');
                 }
             };
         };
-        PlayerAnimationFactory.prototype.createAnimation = function (player, attackSpeed, animFrames, subAnimId, cancelMovement) {
+        CharAnimFactory.prototype.createAnimation = function (character, attackSpeed, animFrames, subAnimId) {
             var fps = Math.floor(animFrames.length / (attackSpeed / 1000));
-            var anim = player.animations.add(subAnimId, animFrames, fps, false);
-            // set cancel movement
-            if (cancelMovement) {
-                anim.onComplete.add(function () {
-                    if (player.isUserPlayer) {
-                        this.continueMovement();
-                    }
-                    this.changeSightPositionToPoint(this.getPointsBaseOnFrame().x, this.getPointsBaseOnFrame().y);
-                }, player);
-                anim.onStart.add(function () {
-                    this.stopMovement();
-                }, player);
-            }
+            var anim = character.animations.add(subAnimId, animFrames, fps, false);
+            anim.onComplete.add(function () { this.changeFacingBaseOnFrame(); }, character);
         };
-        return PlayerAnimationFactory;
+        return CharAnimFactory;
     }());
-    Rwg.PlayerAnimationFactory = PlayerAnimationFactory;
+    Rwg.CharAnimFactory = CharAnimFactory;
 })(Rwg || (Rwg = {}));
-/// <reference path="Player.ts" />
-/// <reference path="../animations/PlayerAnimationFactory.ts" />
+/// <reference path="../factories/CharAnimFactory.ts" />
+/// <reference path="../super/BaseChar.ts" />
+/// <reference path="../enums/CollisionCategory.ts" />
 var Rwg;
 (function (Rwg) {
-    var TargetSkill = (function () {
-        function TargetSkill() {
+    var AttackProvider = (function () {
+        function AttackProvider(args) {
+            this.name = args.name;
+            this.damage = args.damage;
+            this.range = args.range;
+            this.attackSpeed = args.attackSpeed;
+            this.hitAreaWidth = args.hitAreaWidth;
+            this.hitAreaHeight = args.hitAreaHeight;
+            this.debug = args.debug;
+            this.anim = args.anim;
+            this.spriteName = args.spriteName;
+            this.bulletSpeed = args.bulletSpeed;
+            this.cadence = args.cadence;
         }
-        TargetSkill.prototype.provide = function (game, player, skillSlotIndex) {
-            player.skills[this.skillName] = {};
-            player.skills[this.skillName].effect = this.effect.bind(player);
-            player.skills[this.skillName].skillThrown = this.getSkillThrownMethod(this.skillName).bind(player);
-            player.skills[this.skillName].castingSpeed = this.castingSpeed;
-            player.skills[this.skillName].skillName = this.skillName;
-            // range checks for targets
-            if (player.isUserPlayer) {
-                player.skills[this.skillName].skillTime = 0;
-                player.skills[this.skillName].range = this.range;
-                player.skills[this.skillName].coolDown = this.coolDown;
-                player.skills[this.skillName].castKey = this.castKey;
-                player.skills[this.skillName].maxTargetsSelected = this.maxTargetsSelected;
-                player.skills[this.skillName].casting = false;
-                player.skills[this.skillName].targetOnAlly = this.targetOnAlly;
-                var key = game.input.keyboard.addKey(this.castKey);
-                key.onDown.add(this.getSkillSelectedMethod(this.skillName), player);
-                player.skills[this.skillName].skillTrigger = this.getSkillTriggerMethod(this.skillName).bind(player);
-                player.updateMethods['checkRangeFor' + this.skillName] = this.getCheckRangeForSkillMethod(this.skillName).bind(player);
+        AttackProvider.prototype.provide = function (game, character) {
+            // create a new attack in the attack list
+            character.attacks[this.name] = {};
+            character.attacks[this.name].damage = this.damage;
+            character.attacks[this.name].attackSpeed = this.attackSpeed;
+            character.attacks[this.name].range = this.range;
+            character.attacks[this.name].hitAreaWidth = this.hitAreaWidth;
+            character.attacks[this.name].hitAreaHeight = this.hitAreaHeight;
+            character.attacks[this.name].spriteName = this.spriteName;
+            character.attacks[this.name].bulletSpeed = this.bulletSpeed;
+            character.attacks[this.name].name = this.name;
+            // if cadence defined
+            character.attacks[this.name].cadence = 1;
+            if (this.cadence) {
+                character.attacks[this.name].cadence = this.cadence;
             }
-            // casting animations
-            var animationFactory = new Rwg.PlayerAnimationFactory();
-            animationFactory.animId = this.skillName;
-            animationFactory.cancelMovement = true;
-            animationFactory.framesNumber = this.framesForTheAnimation;
-            animationFactory.singleAnimation = this.singleAnimation;
-            player.skills[this.skillName].playCastAnimationTowards =
-                animationFactory.getPlayAnimationTowardsMethod(player, player.skills[this.skillName].castingSpeed).bind(player);
-            // skil slot
-            player.skillSlots[this.skillName] = new Rwg.SkillSlot(game, player, skillSlotIndex);
-            player.skillSlots[this.skillName].iconName = this.skillName;
-            player.skillSlots[this.skillName].coolDown = this.coolDown;
-            player.skillSlots[this.skillName].render();
+            character.attacks[this.name].created = game.add.group();
+            // this is an empty method to store an additional trigger behaviour like the skill icon or the casting bar
+            character.attacks[this.name].additionalOnTriggerCallBack = function () { };
+            // method to create a new sprite hit area every time the hit is triggered
+            character.attacks[this.name].createNewHitArea = this.getCreateSpriteHitAreaMethod(this.name).bind(character);
+            // generates the method callbacks for the attack
+            character.attacks[this.name].attack = this.getAttackMethod(this.name).bind(character);
+            // the method to check the range of the hit area
+            character.updateMethods['checkRangeFor' + this.name] =
+                this.getCheckRangeForAttackMethod(this.name).bind(character);
+            // creates the animation method for this attack
+            var animationFactory = new Rwg.CharAnimFactory(this.anim);
+            character.attacks[this.name].playAttackAnimationTowards =
+                animationFactory.getPlayAnimationTowardsMethod(this.name, character, this.attackSpeed).bind(character);
+            // debug the hit area
+            var name = this.name;
+            if (this.debug) {
+                game.renderMethods['debug-' + this.name + character.name] = function () {
+                    this.attacks[name].created.forEach(function (member) {
+                        if (member) {
+                            this.game.debug.body(member);
+                        }
+                    }, this, true);
+                }.bind(character);
+            }
         };
-        TargetSkill.prototype.getSkillSelectedMethod = function (skillName) {
+        AttackProvider.prototype.getAttackMethod = function (attackName) {
+            return function (message) {
+                var target = new Phaser.Point(message.targetX, message.targetY);
+                var position = new Phaser.Point(message.x, message.y);
+                // fix the character position and stop movement
+                this.moveCharacterToXY(position.x, position.y);
+                // creates a new hit area
+                var hitAreaSprite = this.attacks[attackName].createNewHitArea(position, target);
+                //start the animation
+                if (this.attacks[attackName].playAttackAnimationTowards != null) {
+                    this.attacks[attackName].playAttackAnimationTowards(target.x, target.y);
+                }
+                // the hitArea movement speed will be the distance in pixeles divided by the attackspeed in miliseconds
+                // I want to change this to have the hitArea speed calculated different, but base on attackSpeed
+                var speed = this.attacks[attackName].range / (this.attacks[attackName].attackSpeed / 1000);
+                this.attacks[attackName].additionalOnTriggerCallBack();
+                // if it is a bullet the speed will be the bullet speed
+                if (this.attacks[attackName].bulletSpeed) {
+                    speed = this.attacks[attackName].bulletSpeed;
+                }
+                this.game.physics.arcade.moveToXY(hitAreaSprite, target.x, target.y, speed);
+            };
+        };
+        AttackProvider.prototype.getCreateSpriteHitAreaMethod = function (attackName) {
+            return function (position, target) {
+                // generate the attack hit area sprite
+                var hitAreaSprite = this.attacks[attackName].created.create(0, 0, this.attacks[attackName].spriteName);
+                hitAreaSprite.exists = false;
+                hitAreaSprite.visible = false;
+                hitAreaSprite.origin = {};
+                hitAreaSprite.attackName = attackName;
+                // creates the box2D physics
+                this.game.physics.box2d.enable(hitAreaSprite);
+                hitAreaSprite.body.fixedRotation = true;
+                hitAreaSprite.body.clearFixtures();
+                hitAreaSprite.reset(position.x, position.y);
+                hitAreaSprite.body.setRectangle(this.attacks[attackName].hitAreaWidth, this.attacks[attackName].hitAreaHeight);
+                hitAreaSprite.body.rotation = this.game.physics.arcade.angleBetween(position, target);
+                hitAreaSprite.origin.x = position.x;
+                hitAreaSprite.origin.y = position.y;
+                hitAreaSprite.body.collideWorldBounds = false;
+                hitAreaSprite.body.setCollisionCategory(Rwg.CollisionCategory.ATTACK);
+                hitAreaSprite.body.setCollisionMask(this.attackMask);
+                hitAreaSprite.body.sensor = true;
+                hitAreaSprite.body.setCategoryContactCallback(Rwg.CollisionCategory.WALL, function (attackBody) {
+                    if (attackBody.sprite) {
+                        attackBody.sprite.destroy();
+                    }
+                }, this);
+                var damage = this.attacks[attackName].damage;
+                hitAreaSprite.body.setCategoryContactCallback(this.attackCollision, function (attackBody, attackedBody) {
+                    if (attackBody.sprite) {
+                        attackBody.sprite.destroy();
+                        if (attackedBody.sprite.sendDamageUpdate) {
+                            this.game.state.getCurrentState().player.sendDamageUpdate(this.name, damage);
+                        }
+                    }
+                }, this);
+                return hitAreaSprite;
+            };
+        };
+        AttackProvider.prototype.getCheckRangeForAttackMethod = function (attackName) {
             return function () {
-                if (this.activeTargetSkill) {
-                    if (this.activeTargetSkill.skillName == skillName) {
-                        console.log('skill already selected');
+                this.attacks[attackName].created.forEach(function (member, range) {
+                    if (member.alive) {
+                        if (Phaser.Point.distance(member.position, member.origin, true) > range) {
+                            member.destroy();
+                        }
+                    }
+                }, this, true, this.attacks[attackName].range);
+            };
+        };
+        return AttackProvider;
+    }());
+    Rwg.AttackProvider = AttackProvider;
+})(Rwg || (Rwg = {}));
+/// <reference path="../super/BaseChar.ts" />
+/// <reference path="../enum/MessageType.ts" />
+/// <reference path="../enum/ActionTypes.ts" />
+var Rwg;
+(function (Rwg) {
+    var AttackControlProvider = (function () {
+        function AttackControlProvider(args) {
+            this.name = args.name;
+            this.coolDown = args.coolDown;
+            this.activationKey = args.activationKey;
+            this.icon = args.icon;
+        }
+        AttackControlProvider.prototype.provide = function (game, character) {
+            character.attacks[this.name].attackTime = 0;
+            character.attacks[this.name].coolDown = this.coolDown;
+            character.attacks[this.name].triggerAttack = this.getTriggerAttackMethod(this.name).bind(character);
+            character.attacks[this.name].icon = this.icon;
+            character.attacks[this.name].activationKey = this.activationKey;
+            character.attacks[this.name].select = this.getAttackSelectedMethod(this.name).bind(character);
+        };
+        AttackControlProvider.prototype.getTriggerAttackMethod = function (attackName) {
+            return function () {
+                if (this.game.time.now > this.attacks[attackName].attackTime &&
+                    this.attacks[attackName].created.total < this.attacks[attackName].cadence) {
+                    var message = {
+                        type: Rwg.MessageType.ATTACK,
+                        name: this.name,
+                        targetX: Math.floor(this.game.input.worldX),
+                        targetY: Math.floor(this.game.input.worldY),
+                        x: Math.floor(this.x),
+                        y: Math.floor(this.y),
+                        attackName: attackName
+                    };
+                    this.game.ws.send(message);
+                    // sets a time out when the controlls will be available again
+                    this.movementControlEnable = false;
+                    this.game.time.events.add(this.attacks[attackName].attackSpeed, function () {
+                        this.movementControlEnable = true;
+                    }, this);
+                    this.attacks[attackName].attack(message);
+                    this.attacks[attackName].attackTime = this.game.time.now + this.attacks[attackName].coolDown;
+                }
+            };
+        };
+        AttackControlProvider.prototype.getAttackSelectedMethod = function (attackName) {
+            return function () {
+                this.currentLeftClickAction = this.attacks[attackName].triggerAttack;
+                if (this.currentSelectedSkill) {
+                    this.skills[this.currentSelectedSkill].releaseSkill(true);
+                }
+            };
+        };
+        return AttackControlProvider;
+    }());
+    Rwg.AttackControlProvider = AttackControlProvider;
+})(Rwg || (Rwg = {}));
+/// <reference path="../super/BaseChar.ts" />
+/// <reference path="../factories/CharAnimFactory.ts" />
+var Rwg;
+(function (Rwg) {
+    var SkillProvider = (function () {
+        function SkillProvider(args) {
+            this.name = args.name;
+            this.castingSpeed = args.castingSpeed;
+            this.effect = args.effect;
+            this.anim = args.anim;
+            this.skillReadyIn = args.skillReadyIn;
+            this.animationFrames = args.animationFrames;
+        }
+        SkillProvider.prototype.provide = function (game, player) {
+            player.skills[this.name] = {};
+            player.skills[this.name].effect = this.effect.bind(player);
+            player.skills[this.name].skillThrown = this.getSkillThrownMethod(this.name).bind(player);
+            player.skills[this.name].castingSpeed = this.castingSpeed;
+            player.skills[this.name].skillReadyIn = this.skillReadyIn;
+            player.skills[this.name].name = this.name;
+            // this is an empty method to store an additional trigger behaviour like the skill icon or the casting bar
+            player.skills[this.name].additionalOnTriggerCallBack = function () { };
+            // casting animations
+            var animationFactory = new Rwg.CharAnimFactory(this.anim);
+            player.skills[this.name].playCastAnimationTowards = animationFactory.getPlayAnimationTowardsMethod(this.name, player, player.skills[this.name].castingSpeed).bind(player);
+        };
+        SkillProvider.prototype.getSkillThrownMethod = function (skillName) {
+            return function (message) {
+                // fix the character position and stop movement
+                this.moveCharacterToXY(message.x, message.y);
+                var aheadPoint = this.getAheadPointBaseOnCurrentFrame();
+                this.skills[skillName].playCastAnimationTowards(aheadPoint.x, aheadPoint.y);
+                var skillThrownTime = this.skills[skillName].castingSpeed;
+                if (this.skills[skillName].skillReadyIn != undefined) {
+                    skillThrownTime = skillThrownTime * this.skills[skillName].skillReadyIn;
+                }
+                this.skills[skillName].additionalOnTriggerCallBack(skillThrownTime);
+                this.game.time.events.add(skillThrownTime, function () {
+                    this.skills[skillName].effect(message.target);
+                }, this);
+            };
+        };
+        return SkillProvider;
+    }());
+    Rwg.SkillProvider = SkillProvider;
+})(Rwg || (Rwg = {}));
+/// <reference path="../super/BaseChar.ts" />
+/// <reference path="../enums/MessageType.ts" />
+/// <reference path="../factories/CharAnimFactory.ts" />
+var Rwg;
+(function (Rwg) {
+    var TargetSkillControlProvider = (function () {
+        function TargetSkillControlProvider(args) {
+            this.name = args.name;
+            this.range = args.range;
+            this.coolDown = args.coolDown;
+            this.activationKey = args.activationKey;
+            this.maxTargetsSelected = args.maxTargetsSelected;
+            this.targetOnAlly = args.targetOnAlly;
+            this.icon = args.icon;
+        }
+        TargetSkillControlProvider.prototype.provide = function (game, character) {
+            character.skills[this.name].skillTime = 0;
+            character.skills[this.name].range = this.range;
+            character.skills[this.name].coolDown = this.coolDown;
+            character.skills[this.name].activationKey = this.activationKey;
+            character.skills[this.name].maxTargetsSelected = this.maxTargetsSelected;
+            character.skills[this.name].casting = false;
+            character.skills[this.name].targetOnAlly = this.targetOnAlly;
+            character.skills[this.name].icon = this.icon;
+            character.skills[this.name].releaseSkill = this.getReleaseSkillMethod(this.name).bind(character);
+            character.skills[this.name].select = this.getSkillSelectedMethod(this.name).bind(character);
+            character.skills[this.name].skillTrigger = this.getSkillTriggerMethod(this.name).bind(character);
+            character.updateMethods['checkRangeFor' + this.name] = this.getCheckRangeForSkillMethod(this.name).bind(character);
+        };
+        TargetSkillControlProvider.prototype.getSkillSelectedMethod = function (skillName) {
+            return function () {
+                if (this.currentSelectedSkill) {
+                    if (this.skills[skillName].casting) {
                         return;
                     }
+                    this.skills[this.currentSelectedSkill].releaseSkill(true);
                 }
+                this.maxTargetsSelected = this.skills[skillName].maxTargetsSelected;
+                this.targetsOver = [];
+                this.currentSelectedSkill = skillName;
+                this.currentLeftClickAction = this.skills[skillName].skillTrigger;
+            };
+        };
+        TargetSkillControlProvider.prototype.getSkillTriggerMethod = function (skillName) {
+            return function () {
                 if (this.game.time.now < this.skills[skillName].skillTime) {
                     console.log('skill not ready yet');
                     return;
                 }
-                if (this.activeClickOnMapSkill != null) {
-                    this.activeClickOnMapSkill.casting = false;
-                    this.activeClickOnMapSkill = null;
+                if (this.skills[skillName].casting) {
+                    console.log('still casting');
+                    return;
                 }
-                this.activeTargetSkill = this.skills[skillName];
-                this.maxTargetsSelected = this.skills[skillName].maxTargetsSelected;
-                this.targetsOver = [];
-                // change the attack
-                this.currentLeftClickAction = this.skills[skillName].skillTrigger;
-                this.skillSlots[skillName].mark();
-            };
-        };
-        TargetSkill.prototype.getSkillThrownMethod = function (skillName) {
-            return function (message) {
-                this.skills[message.skillName].playCastAnimationTowards(this.getPointsBaseOnFrame().x, this.getPointsBaseOnFrame().y);
-                this.skills[message.skillName].casting = true;
-                this.game.time.events.add(this.skills[message.skillName].castingSpeed, function () {
-                    this.skills[message.skillName].effect(message.targets);
-                    if (this.isUserPlayer) {
-                        this.releaseTargetSkill();
-                    }
-                }, this);
-            };
-        };
-        TargetSkill.prototype.getSkillTriggerMethod = function (skillName) {
-            return function () {
-                if (this.targetsOver.length > 0 && !this.skills[skillName].casting) {
+                if (this.targetsOver.length > 0) {
                     var targets = [];
                     for (var i = 0; i < this.targetsOver.length; i++) {
-                        targets.push(this.targetsOver[i].playerId);
+                        targets.push(this.targetsOver[i].name);
                     }
                     var message = {
-                        type: 'skillThrown',
-                        playerId: this.playerId,
+                        type: Rwg.MessageType.SKILL,
+                        name: this.name,
                         skillName: skillName,
-                        targets: targets
+                        x: this.x,
+                        y: this.y,
+                        target: targets
                     };
+                    this.movementControlEnable = false;
+                    this.skills[skillName].casting = true;
+                    this.game.time.events.add(this.skills[skillName].castingSpeed, function () {
+                        this.movementControlEnable = true;
+                        this.skills[skillName].releaseSkill();
+                    }, this);
                     this.game.ws.send(message);
                     this.skills[skillName].skillThrown(message);
                     this.skills[skillName].skillTime = this.game.time.now + this.skills[skillName].coolDown;
-                    this.skillSlots[skillName].use();
+                }
+                else {
+                    console.log('no targets selected');
                 }
             };
         };
-        TargetSkill.prototype.getCheckRangeForSkillMethod = function (skillName) {
+        TargetSkillControlProvider.prototype.getCheckRangeForSkillMethod = function (skillName) {
             return function () {
                 var newTargets = [];
                 for (var i = 0; i < this.targetsOver.length; i++) {
@@ -1006,740 +1467,1045 @@ var Rwg;
                 this.targetsOver = newTargets;
             };
         };
-        return TargetSkill;
+        TargetSkillControlProvider.prototype.getReleaseSkillMethod = function (skillName) {
+            return function (hardRelease) {
+                for (var i = 0; i < this.targetsOver.length; i++) {
+                    this.targetsOver[i].target.visible = false;
+                }
+                this.targetsOver = [];
+                this.skills[skillName].casting = false;
+                if (hardRelease) {
+                    this.maxTargetsSelected = 0;
+                    this.currentSelectedSkill = null;
+                }
+            };
+        };
+        return TargetSkillControlProvider;
     }());
-    Rwg.TargetSkill = TargetSkill;
+    Rwg.TargetSkillControlProvider = TargetSkillControlProvider;
 })(Rwg || (Rwg = {}));
-/// <reference path="Player.ts" />
-/// <reference path="../animations/PlayerAnimationFactory.ts" />
+/// <reference path="../super/BaseChar.ts" />
+/// <reference path="../enums/MessageType.ts" />
+/// <reference path="../factories/CharAnimFactory.ts" />
 var Rwg;
 (function (Rwg) {
-    var ClickOnMapSkill = (function () {
-        function ClickOnMapSkill() {
+    var AreaSkillControlProvider = (function () {
+        function AreaSkillControlProvider(args) {
+            this.name = args.name;
+            this.range = args.range;
+            this.coolDown = args.coolDown;
+            this.activationKey = args.activationKey;
+            this.icon = args.icon;
         }
-        ClickOnMapSkill.prototype.provide = function (game, player, skillSlotIndex) {
-            player.skills[this.skillName] = {};
-            player.skills[this.skillName].effect = this.effect.bind(player);
-            player.skills[this.skillName].skillThrown = this.getSkillThrownMethod(this.skillName).bind(player);
-            player.skills[this.skillName].castingSpeed = this.castingSpeed;
-            player.skills[this.skillName].skillName = this.skillName;
-            if (player.isUserPlayer) {
-                player.skills[this.skillName].skillTime = 0;
-                player.skills[this.skillName].range = this.range;
-                player.skills[this.skillName].coolDown = this.coolDown;
-                player.skills[this.skillName].castKey = this.castKey;
-                player.skills[this.skillName].casting = false;
-                player.skills[this.skillName].velocitySpeed = this.velocitySpeed;
-                var key = game.input.keyboard.addKey(this.castKey);
-                key.onDown.add(this.getSkillSelectedMethod(this.skillName), player);
-                player.skills[this.skillName].skillTrigger = this.getSkillTriggerMethod(this.skillName).bind(player);
-            }
-            // casting animations
-            var animationFactory = new Rwg.PlayerAnimationFactory();
-            animationFactory.animId = this.skillName;
-            animationFactory.cancelMovement = true;
-            animationFactory.framesNumber = this.framesForTheAnimation;
-            animationFactory.singleAnimation = this.singleAnimation;
-            player.skills[this.skillName].playCastAnimationTowards =
-                animationFactory.getPlayAnimationTowardsMethod(player, player.skills[this.skillName].castingSpeed).bind(player);
-            // skil slot
-            player.skillSlots[this.skillName] = new Rwg.SkillSlot(game, player, skillSlotIndex);
-            player.skillSlots[this.skillName].iconName = this.skillName;
-            player.skillSlots[this.skillName].coolDown = this.coolDown;
-            player.skillSlots[this.skillName].render();
+        AreaSkillControlProvider.prototype.provide = function (game, character) {
+            character.skills[this.name].skillTime = 0;
+            character.skills[this.name].range = this.range;
+            character.skills[this.name].coolDown = this.coolDown;
+            character.skills[this.name].activationKey = this.activationKey;
+            character.skills[this.name].casting = false;
+            character.skills[this.name].icon = this.icon;
+            character.skills[this.name].releaseSkill = this.getReleaseSkillMethod(this.name).bind(character);
+            character.skills[this.name].select = this.getSkillSelectedMethod(this.name).bind(character);
+            character.skills[this.name].skillTrigger = this.getSkillTriggerMethod(this.name).bind(character);
         };
-        ClickOnMapSkill.prototype.getSkillSelectedMethod = function (skillName) {
+        AreaSkillControlProvider.prototype.getSkillSelectedMethod = function (skillName) {
             return function () {
-                if (this.activeClickOnMapSkill) {
-                    if (this.activeClickOnMapSkill.skillName == skillName) {
-                        console.log('skill already selected');
+                if (this.currentSelectedSkill) {
+                    if (this.skills[skillName].casting) {
                         return;
                     }
+                    this.skills[this.currentSelectedSkill].releaseSkill(true);
                 }
+                this.skillAreaTarget.range = this.skills[skillName].range;
+                this.skillAreaTarget.active = true;
+                this.currentSelectedSkill = skillName;
+                this.currentLeftClickAction = this.skills[skillName].skillTrigger;
+            };
+        };
+        AreaSkillControlProvider.prototype.getSkillTriggerMethod = function (skillName) {
+            return function () {
                 if (this.game.time.now < this.skills[skillName].skillTime) {
                     console.log('skill not ready yet');
                     return;
                 }
-                if (this.activeTargetSkill != null) {
-                    for (var i = 0; i < this.targetsOver.length; i++) {
-                        this.targetsOver[i].target.visible = false;
-                    }
-                    this.targetsOver = [];
-                    this.activeTargetSkill.casting = false;
-                    this.activeTargetSkill = null;
+                if (this.skills[skillName].casting) {
+                    console.log('still casting');
+                    return;
                 }
-                this.skillSlots[skillName].mark();
-                this.activeClickOnMapSkill = this.skills[skillName];
-                this.currentLeftClickAction = this.skills[skillName].skillTrigger;
-            };
-        };
-        ClickOnMapSkill.prototype.getSkillThrownMethod = function (skillName) {
-            return function (message) {
-                this.skills[message.skillName].playCastAnimationTowards(this.getPointsBaseOnFrame().x, this.getPointsBaseOnFrame().y);
-                this.skills[message.skillName].casting = true;
-                this.skills[message.skillName].effect(message);
-                if (this.isUserPlayer) {
-                    this.releaseClickOnMapSkill();
-                }
-            };
-        };
-        ClickOnMapSkill.prototype.getSkillTriggerMethod = function (skillName) {
-            return function () {
-                if (!this.skills[skillName].casting) {
+                if (this.skillAreaTarget.visible) {
                     var message = {
-                        type: 'skillThrown',
-                        playerId: this.playerId,
+                        type: Rwg.MessageType.SKILL,
+                        name: this.name,
                         skillName: skillName,
                         x: this.x,
                         y: this.y,
-                        targetX: this.game.input.worldX,
-                        targetY: this.game.input.worldY,
-                        range: this.skills[skillName].range,
-                        velocitySpeed: this.skills[skillName].velocitySpeed
+                        target: {
+                            x: this.skillAreaTarget.x,
+                            y: this.skillAreaTarget.y
+                        }
                     };
+                    this.movementControlEnable = false;
+                    this.skills[skillName].casting = true;
+                    this.skillAreaTarget.active = false;
+                    this.skillAreaTarget.visible = false;
+                    this.game.time.events.add(this.skills[skillName].castingSpeed, function () {
+                        this.movementControlEnable = true;
+                        this.skillAreaTarget.active = true;
+                        this.skills[skillName].releaseSkill();
+                    }, this);
                     this.game.ws.send(message);
                     this.skills[skillName].skillThrown(message);
                     this.skills[skillName].skillTime = this.game.time.now + this.skills[skillName].coolDown;
-                    this.skillSlots[skillName].use();
                 }
             };
         };
-        return ClickOnMapSkill;
+        AreaSkillControlProvider.prototype.getReleaseSkillMethod = function (skillName) {
+            return function (hardRelease) {
+                this.skills[skillName].casting = false;
+                if (hardRelease) {
+                    this.skillAreaTarget.range = 0;
+                    this.skillAreaTarget.active = false;
+                    this.skillAreaTarget.visible = false;
+                }
+            };
+        };
+        return AreaSkillControlProvider;
     }());
-    Rwg.ClickOnMapSkill = ClickOnMapSkill;
+    Rwg.AreaSkillControlProvider = AreaSkillControlProvider;
 })(Rwg || (Rwg = {}));
-/// <reference path="Player.ts" />
-/// <reference path="../animations/PlayerAnimationFactory.ts" />
+/// <reference path="../super/BaseChar.ts" />
 var Rwg;
 (function (Rwg) {
-    var MeleeAttack = (function () {
-        function MeleeAttack(attackName, damage, range, attackSpeed, coolDown, hitAreaWidth, hitAreaHeight, activeAttackKey, debug) {
-            this.attackName = attackName;
-            this.damage = damage;
-            this.range = range;
-            this.attackSpeed = attackSpeed;
-            this.coolDown = coolDown;
-            this.hitAreaWidth = hitAreaWidth;
-            this.hitAreaHeight = hitAreaHeight;
-            this.activeAttackKey = activeAttackKey;
-            this.debug = debug;
+    var SpriteUIProvider = (function () {
+        function SpriteUIProvider() {
         }
-        MeleeAttack.prototype.provide = function (game, player, skillSlotIndex) {
-            // create a new attack in the attack list
-            player.attacks[this.attackName] = {};
-            player.attacks[this.attackName].attackTime = 0;
-            player.attacks[this.attackName].coolDown = this.coolDown;
-            player.attacks[this.attackName].damage = this.damage;
-            player.attacks[this.attackName].attackSpeed = this.attackSpeed;
-            player.attacks[this.attackName].range = this.range;
-            // generate the attack hit area sprite
-            player.attacks[this.attackName].hitAreaSprite = player.activeAttack.create(0, 0, this.createHitAreBmd(game, this.hitAreaWidth, this.hitAreaHeight, this.debug));
-            player.attacks[this.attackName].hitAreaSprite.exists = false;
-            player.attacks[this.attackName].hitAreaSprite.visible = false;
-            player.attacks[this.attackName].hitAreaSprite.origin = {};
-            player.attacks[this.attackName].hitAreaSprite.origin.x = this.x;
-            player.attacks[this.attackName].hitAreaSprite.origin.y = this.y;
-            player.attacks[this.attackName].hitAreaSprite.anchor.set(0.5);
-            player.attacks[this.attackName].hitAreaSprite.attackName = this.attackName;
-            // generates the method callbacks for the attack
-            player.attacks[this.attackName].attack = this.getAttackMethod(this.attackName).bind(player);
-            player.attacks[this.attackName].triggerAttack = this.getTriggerAttackMethod(this.attackName).bind(player);
-            player.attacks[this.attackName].additionalEffect = null;
-            // the method to check the range of the hit area
-            player.updateMethods['checkRangeFor' + this.attackName] = this.getCheckRangeForAttackMethod(this.attackName).bind(player);
-            // methods for attack base on key activation
-            if (this.activeAttackKey == null) {
-                player.defaultLeftClickAction = player.attacks[this.attackName].triggerAttack.bind(player);
-                player.currentLeftClickAction = player.attacks[this.attackName].triggerAttack.bind(player);
-                player.activAction = this.attackName;
+        SpriteUIProvider.prototype.provide = function (game, character) {
+            character.spriteUi = game.add.group();
+            // creates the sprite UI only for other players
+            if (game.state.getCurrentState().player) {
+                this.provideMiniHealthBar(game, character);
+                this.provideCharLabel(game, character);
+            }
+            // manual anchor implementation for the group
+            character.spriteUi.anchor = {};
+            character.spriteUi.anchor.x = 0;
+            character.spriteUi.anchor.y = -((character.height / 2) + 15);
+            var plus = 0;
+            if ((character.width / 2) != 25) {
+                plus = 25 - (character.width / 2);
+            }
+            character.spriteUi.anchor.x = -((character.width / 2) + plus);
+            // updates the position of the ui every time the sprites updates
+            character.updateMethods['SpriteUIFixPosition'] = function () {
+                this.spriteUi.position.y = this.y + this.spriteUi.anchor.y;
+                this.spriteUi.position.x = this.x + this.spriteUi.anchor.x;
+            }.bind(character);
+            character.spriteUi.visible = true;
+            character.events.onDestroy.add(function () {
+                this.spriteUi.destroy();
+            }, character);
+        };
+        SpriteUIProvider.prototype.provideMiniHealthBar = function (game, character) {
+            // mini life bar
+            var miniLifeBarFrame = game.add.graphics(0, 0);
+            miniLifeBarFrame.beginFill(0x000000);
+            miniLifeBarFrame.drawRect(0, 0, 50, 4);
+            var miniLifeBarHealth = game.add.graphics(1, 1);
+            if (game.state.getCurrentState().player.team == character.team) {
+                miniLifeBarHealth.beginFill(0x00ff00);
             }
             else {
-                var key = game.input.keyboard.addKey(this.activeAttackKey);
-                key.onDown.add(this.getAttackSelectedMethod(this.attackName), player);
+                miniLifeBarHealth.beginFill(0xff0000);
             }
-            // creates the animation method for this attack
-            var animationFactory = new Rwg.PlayerAnimationFactory();
-            animationFactory.animId = this.attackName;
-            animationFactory.cancelMovement = true;
-            animationFactory.framesNumber = this.framesForTheAnimation;
-            animationFactory.singleAnimation = this.singleAnimation;
-            player.attacks[this.attackName].playAttackAnimationTowards =
-                animationFactory.getPlayAnimationTowardsMethod(player, this.attackSpeed).bind(player);
-            // skil slot
-            player.skillSlots[this.attackName] = new Rwg.SkillSlot(game, player, skillSlotIndex);
-            player.skillSlots[this.attackName].iconName = this.attackName;
-            player.skillSlots[this.attackName].coolDown = this.coolDown;
-            player.skillSlots[this.attackName].render();
-        };
-        MeleeAttack.prototype.getAttackMethod = function (attackName) {
-            return function (message) {
-                var target = new Phaser.Point(message.targetX, message.targetY);
-                var position = new Phaser.Point(message.x, message.y);
-                this.changeSightPositionToPoint(target.x, target.y);
-                this.attacks[attackName].hitAreaSprite.rotation = this.game.physics.arcade.angleBetween(position, target);
-                this.attacks[attackName].hitAreaSprite.reset(position.x, position.y);
-                this.attacks[attackName].hitAreaSprite.origin.x = position.x;
-                this.attacks[attackName].hitAreaSprite.origin.y = position.y;
-                //start the animation
-                if (this.attacks[attackName].playAttackAnimationTowards != null) {
-                    this.attacks[attackName].playAttackAnimationTowards(target.x, target.y);
+            miniLifeBarHealth.drawRect(0, 0, 48, 2);
+            miniLifeBarHealth.currentHP = -1;
+            character.spriteUi.add(miniLifeBarFrame);
+            character.spriteUi.add(miniLifeBarHealth);
+            character.updateMethods['changeInMiniLifeBar'] = function () {
+                if (miniLifeBarHealth.currentHP != this.currentHP) {
+                    var width = (this.currentHP * 48) / this.maxHP;
+                    miniLifeBarHealth.width = width;
                 }
-                // the hitArea movement speed will be the distance in pixeles divided by the attackspeed in miliseconds
-                // I want to change this to have the hitArea speed calculated different, but base on attackSpeed
-                var speed = this.attacks[attackName].range / (this.attacks[attackName].attackSpeed / 1000);
-                this.game.physics.arcade.moveToXY(this.attacks[attackName].hitAreaSprite, target.x, target.y, speed);
-            };
+            }.bind(character);
         };
-        MeleeAttack.prototype.getTriggerAttackMethod = function (attackName) {
-            return function () {
-                if (this.game.time.now > this.attacks[attackName].attackTime) {
-                    this.skillSlots[attackName].use();
-                    var message = {
-                        playerId: this.playerId,
-                        attackName: attackName,
-                        targetX: this.game.input.worldX,
-                        targetY: this.game.input.worldY,
-                        x: this.x,
-                        y: this.y,
-                        type: 'attack',
-                        team: this.team
-                    };
-                    this.game.ws.send(message);
-                    this.attacks[attackName].attack(message);
-                    this.attacks[attackName].attackTime = this.game.time.now + this.attacks[attackName].coolDown;
-                }
-            };
+        SpriteUIProvider.prototype.provideCharLabel = function (game, character) {
+            // title
+            var label = game.add.text(0, -8, character.name, { font: "bold 12px Arial", fill: "#ffffff", boundsAlignH: "center", boundsAlignV: "middle" });
+            label.stroke = '#000000';
+            label.strokeThickness = 4;
+            label.setTextBounds(0, 0, character.spriteUi.width, character.spriteUi.height);
+            character.spriteUi.add(label);
         };
-        MeleeAttack.prototype.getCheckRangeForAttackMethod = function (attackName) {
-            return function () {
-                if (this.attacks[attackName].hitAreaSprite.alive) {
-                    if (Phaser.Point.distance(this.attacks[attackName].hitAreaSprite.position, this.attacks[attackName].hitAreaSprite.origin, true) > this.attacks[attackName].range) {
-                        this.attacks[attackName].hitAreaSprite.kill();
-                    }
-                }
-            };
-        };
-        MeleeAttack.prototype.getAttackSelectedMethod = function (attackName) {
-            return function () {
-                this.skillSlots[attackName].mark();
-                this.currentLeftClickAction = this.attacks[attackName].triggerAttack;
-                this.lastActiveAttack = attackName;
-            };
-        };
-        // creates the hit area bitmapdata
-        MeleeAttack.prototype.createHitAreBmd = function (game, hitAreaWidth, hitAreaHeight, debug) {
-            var hitAreaBmd = game.add.bitmapData(hitAreaWidth, hitAreaHeight);
-            hitAreaBmd.ctx.beginPath();
-            hitAreaBmd.ctx.rect(0, 0, hitAreaWidth, hitAreaHeight);
-            if (debug) {
-                hitAreaBmd.ctx.fillStyle = '#ffffff';
-                hitAreaBmd.ctx.fill();
-            }
-            return hitAreaBmd;
-        };
-        return MeleeAttack;
+        return SpriteUIProvider;
     }());
-    Rwg.MeleeAttack = MeleeAttack;
+    Rwg.SpriteUIProvider = SpriteUIProvider;
 })(Rwg || (Rwg = {}));
-/// <reference path="Player.ts" />
-/// <reference path="../animations/PlayerAnimationFactory.ts" />
+/// <reference path="../super/BaseChar.ts" />
+/// <reference path="../enums/SkillTypes.ts" />
+/// <reference path="../enums/ActionTypes.ts" />
+/// <reference path="../enums/CollisionCategory.ts" />
+/// <reference path="../providers/MovementControlProvider.ts" />
+/// <reference path="../providers/AttackProvider.ts" />
+/// <reference path="../providers/AttackControlProvider.ts" />
+/// <reference path="../providers/SkillProvider.ts" />
+/// <reference path="../providers/TargetSkillControlProvider.ts" />
+/// <reference path="../providers/AreaSkillControlProvider.ts" />
+/// <reference path="../providers/SpriteUIProvider.ts" />
 var Rwg;
 (function (Rwg) {
-    var RangedAttack = (function () {
-        function RangedAttack() {
+    var CharFactory = (function () {
+        function CharFactory() {
         }
-        RangedAttack.prototype.provide = function (game, player, skillSlotIndex) {
-            // create a new attack in the attack list
-            player.attacks[this.attackName] = {};
-            player.attacks[this.attackName].attackTime = 0;
-            player.attacks[this.attackName].coolDown = this.coolDown;
-            player.attacks[this.attackName].damage = this.damage;
-            player.attacks[this.attackName].attackSpeed = this.attackSpeed;
-            player.attacks[this.attackName].range = this.range;
-            player.attacks[this.attackName].bulletSpeed = this.bulletSpeed;
-            // generate the attack hit area sprites
-            for (var i = 0; i < this.cadence; i++) {
-                var bullet = player.activeAttack.create(0, 0, this.bulletSpriteName);
-                bullet.exists = false;
-                bullet.visible = false;
-                bullet.origin = {};
-                bullet.origin.x = this.x;
-                bullet.origin.y = this.y;
-                bullet.anchor.set(0.5);
-                bullet.attackName = this.attackName;
+        CharFactory.getChar = function (args, game) {
+            // validators for the char argument
+            if (!(game && args.atlasName && args.framesPerMovement && args.name)) {
+                throw new Error('Error creating character - missing arguments ' +
+                    'game && args.atlasName && args.framesPerMovement && args.name');
             }
-            // generates the method callbacks for the attack
-            player.attacks[this.attackName].attack = this.getAttackMethod(this.attackName).bind(player);
-            player.attacks[this.attackName].triggerAttack = this.getTriggerAttackMethod(this.attackName).bind(player);
-            player.attacks[this.attackName].additionalEffect = null;
-            // the method to check the range of the hit area
-            player.updateMethods['checkRangeFor' + this.attackName] = this.getCheckRangeForAttackMethod(this.attackName).bind(player);
-            // methods for attack base on key activation
-            if (this.activeAttackKey == null) {
-                player.defaultLeftClickAction = player.attacks[this.attackName].triggerAttack.bind(player);
-                player.currentLeftClickAction = player.attacks[this.attackName].triggerAttack.bind(player);
+            CharFactory.checkFrames(game, args.atlasName, args.framesPerMovement);
+            var newChar = new Rwg.BaseChar(game, args.name, args.atlasName, args.framesPerMovement, args.scale);
+            newChar.movementSpeed = args.movementSpeed;
+            newChar.staticMass = args.staticMass;
+            newChar.dinamicMass = args.dinamicMass;
+            newChar.team = args.team;
+            // health settings
+            if (args.health) {
+                newChar.maxHP = args.health.maxHP;
+                newChar.currentHP = args.health.maxHP;
+                newChar.regenHPperSec = args.health.regenHPperSec;
+                newChar.maxMP = args.health.maxMP;
+                newChar.currentMP = args.health.maxMP;
+                newChar.regenMPperSec = args.health.regenMPperSec;
+            }
+            if (args.controlable) {
+                (new Rwg.MovementControlProvider()).provide(newChar);
+            }
+            if (args.attacks) {
+                newChar.attacks = {};
+                for (var i = 0; i < args.attacks.length; i++) {
+                    (new Rwg.AttackProvider(args.attacks[i])).provide(game, newChar);
+                }
+            }
+            if (args.skills) {
+                newChar.skills = {};
+                for (var i = 0; i < args.skills.length; i++) {
+                    (new Rwg.SkillProvider(args.skills[i])).provide(game, newChar);
+                }
+            }
+            if (args.attackControls || args.skillControls) {
+                newChar.currentLeftClickAction = null;
+                newChar.currentSelectedSkill = null;
+                newChar.updateMethods['leftClickAction'] = function () {
+                    if (this.game.input.activePointer.leftButton.isDown && this.currentLeftClickAction) {
+                        this.currentLeftClickAction();
+                    }
+                }.bind(newChar);
+            }
+            if (args.attackControls) {
+                for (var i = 0; i < args.attackControls.length; i++) {
+                    (new Rwg.AttackControlProvider(args.attackControls[i])).provide(game, newChar);
+                }
+            }
+            if (args.skillControls) {
+                if (CharFactory.useSkillType(args.skillControls, Rwg.SkillTypes.TARGET)) {
+                    newChar.maxTargetsSelected = 0;
+                    newChar.targetsOver = [];
+                    newChar.canTarget = true;
+                    CharFactory.addTargetMethods(newChar);
+                }
+                if (CharFactory.useSkillType(args.skillControls, Rwg.SkillTypes.AREA)) {
+                    CharFactory.addSkillAreaMethods(game, newChar);
+                }
+                for (var i = 0; i < args.skillControls.length; i++) {
+                    switch (args.skillControls[i].type) {
+                        case Rwg.SkillTypes.TARGET:
+                            (new Rwg.TargetSkillControlProvider(args.skillControls[i])).provide(game, newChar);
+                            break;
+                        case Rwg.SkillTypes.AREA:
+                            (new Rwg.AreaSkillControlProvider(args.skillControls[i])).provide(game, newChar);
+                    }
+                }
+            }
+            var state = game.state.getCurrentState();
+            if (args.targetable && args.name != state.player.name) {
+                state.player.addTargetable(newChar);
+            }
+            (new Rwg.SpriteUIProvider()).provide(game, newChar);
+            if (args.debugBody) {
+                game.renderMethods['debugBody' + args.name] = function () {
+                    this.game.debug.body(newChar);
+                }.bind(newChar);
+            }
+            // setUp the colision detection
+            // the damageHitbox will response to ATTACK category colisions
+            newChar.damageHitbox.m_filter.maskBits = Rwg.CollisionCategory.ATTACK;
+            if (newChar.team) {
+                // the category of the hit area of this character will be TEAM_ONE_HITBOX
+                newChar.damageHitbox.m_filter.categoryBits = Rwg.CollisionCategory.TEAM_ONE_HITBOX;
+                // the attack will response to colision with TEAM_ZERO_HITBOX and WALL
+                newChar.attackMask = Rwg.CollisionCategory.TEAM_ZERO_HITBOX | Rwg.CollisionCategory.WALL;
+                // the attack will do something special when it colides with TEAM_ZERO_HITBOX
+                newChar.attackCollision = Rwg.CollisionCategory.TEAM_ZERO_HITBOX;
             }
             else {
-                var key = game.input.keyboard.addKey(this.activeAttackKey);
-                key.onDown.add(this.getAttackSelectedMethod(this.attackName), player);
+                // same as avobe
+                newChar.damageHitbox.m_filter.categoryBits = Rwg.CollisionCategory.TEAM_ZERO_HITBOX;
+                newChar.attackMask = Rwg.CollisionCategory.TEAM_ONE_HITBOX | Rwg.CollisionCategory.WALL;
+                newChar.attackCollision = Rwg.CollisionCategory.TEAM_ONE_HITBOX;
             }
-            // creates the animation method for this attack
-            var animationFactory = new Rwg.PlayerAnimationFactory();
-            animationFactory.animId = this.attackName;
-            animationFactory.cancelMovement = true;
-            animationFactory.framesNumber = this.framesForTheAnimation;
-            animationFactory.singleAnimation = this.singleAnimation;
-            player.attacks[this.attackName].playAttackAnimationTowards =
-                animationFactory.getPlayAnimationTowardsMethod(player, this.attackSpeed).bind(player);
-            // skil slot
-            player.skillSlots[this.attackName] = new Rwg.SkillSlot(game, player, skillSlotIndex);
-            player.skillSlots[this.attackName].iconName = this.attackName;
-            player.skillSlots[this.attackName].coolDown = this.coolDown;
-            player.skillSlots[this.attackName].render();
-        };
-        RangedAttack.prototype.getAttackMethod = function (attackName) {
-            return function (message) {
-                var target = new Phaser.Point(message.targetX, message.targetY);
-                var position = new Phaser.Point(message.x, message.y);
-                this.changeSightPositionToPoint(target.x, target.y);
-                var hitAreaSprite = this.activeAttack.next();
-                while (hitAreaSprite.attackName != attackName) {
-                    hitAreaSprite = this.activeAttack.next();
-                }
-                if (hitAreaSprite) {
-                    hitAreaSprite.rotation = this.game.physics.arcade.angleBetween(position, target);
-                    hitAreaSprite.reset(position.x, position.y);
-                    hitAreaSprite.origin.x = position.x;
-                    hitAreaSprite.origin.y = position.y;
-                    //start the animation
-                    if (this.attacks[attackName].playAttackAnimationTowards != null) {
-                        this.attacks[attackName].playAttackAnimationTowards(target.x, target.y);
-                    }
-                    this.game.physics.arcade.moveToXY(hitAreaSprite, target.x, target.y, this.attacks[attackName].bulletSpeed);
-                }
-            };
-        };
-        RangedAttack.prototype.getTriggerAttackMethod = function (attackName) {
-            return function () {
-                if (this.game.time.now > this.attacks[attackName].attackTime) {
-                    this.skillSlots[attackName].use();
-                    var message = {
-                        playerId: this.playerId,
-                        attackName: attackName,
-                        targetX: this.game.input.worldX,
-                        targetY: this.game.input.worldY,
-                        x: this.x,
-                        y: this.y,
-                        type: 'attack',
-                        team: this.team
-                    };
-                    this.game.ws.send(message);
-                    this.attacks[attackName].attack(message);
-                    this.attacks[attackName].attackTime = this.game.time.now + this.attacks[attackName].coolDown;
-                }
-            };
-        };
-        RangedAttack.prototype.getCheckRangeForAttackMethod = function (attackName) {
-            return function () {
-                this.activeAttack.forEach(function (member, range) {
-                    if (member.alive && member.attackName == attackName) {
-                        if (Phaser.Point.distance(member.position, member.origin, true) > range) {
-                            member.kill();
-                        }
-                    }
-                }, this, true, this.attacks[attackName].range);
-            };
-        };
-        RangedAttack.prototype.getAttackSelectedMethod = function (attackName) {
-            return function () {
-                this.skillSlots[attackName].mark();
-                this.currentLeftClickAction = this.attacks[attackName].triggerAttack;
-                this.lastActiveAttack = attackName;
-            };
-        };
-        return RangedAttack;
-    }());
-    Rwg.RangedAttack = RangedAttack;
-})(Rwg || (Rwg = {}));
-/// <reference path="UserPlayer.ts" />
-/// <reference path="../controls/PlayerMovementControls.ts" />
-/// <reference path="../skills/TargetSkill.ts" />
-/// <reference path="../skills/ClickOnMapSkill.ts" />
-/// <reference path="../attacks/MeleeAttack.ts" />
-/// <reference path="../attacks/RangedAttack.ts" />
-var Rwg;
-(function (Rwg) {
-    var PlayerFactory = (function () {
-        function PlayerFactory() {
-        }
-        PlayerFactory.createUserPlayer = function (game, data) {
-            game.userPlayer = new Rwg.UserPlayer(game, data.x, data.y);
-            game.userPlayer.team = data.team;
-            game.userPlayer.setColor(data.color);
-            game.userPlayer.setPlayerId(data.playerId);
-            game.userPlayer.fightType = data.fightType;
-            game.userPlayer.isUserPlayer = true;
-            // controlls
-            (new Rwg.PlayerMovementControls(300)).provide(game.userPlayer);
-            if (data.fightType == 'melee') {
-                PlayerFactory.allAttacks(game, game.userPlayer);
-                game.userPlayer.currentLeftClickAction = game.userPlayer.attacks['sword'].triggerAttack.bind(game.userPlayer);
-                game.userPlayer.defaultLeftClickAction = game.userPlayer.attacks['sword'].triggerAttack.bind(game.userPlayer);
-                game.userPlayer.lastActiveAttack = 'sword';
+            // adds the send damage method
+            if (!state.player) {
+                CharFactory.addSendDamageUpdateMethod(newChar);
             }
-            else if (data.fightType == 'ranged') {
-                PlayerFactory.allAttacks(game, game.userPlayer);
-                game.userPlayer.currentLeftClickAction = game.userPlayer.attacks['bow'].triggerAttack.bind(game.userPlayer);
-                game.userPlayer.defaultLeftClickAction = game.userPlayer.attacks['bow'].triggerAttack.bind(game.userPlayer);
-                game.userPlayer.lastActiveAttack = 'bow';
-            }
+            return newChar;
         };
-        PlayerFactory.createPlayer = function (game, data) {
-            var newPlayer = new Rwg.Player(game, data.x, data.y);
-            newPlayer.isUserPlayer = false;
-            newPlayer.team = data.team;
-            newPlayer.setColor(data.color);
-            newPlayer.setPlayerId(data.playerId);
-            newPlayer.fightType = data.fightType;
-            if (newPlayer.team == game.userPlayer.team) {
-                game.allyPlayers.add(newPlayer);
-                newPlayer.setMiniLifeBar(true);
-            }
-            else {
-                game.foePlayers.add(newPlayer);
-                newPlayer.setMiniLifeBar(false);
-            }
-            PlayerFactory.allAttacks(game, newPlayer);
-            // every time there is a new player it has to add the targeteable element
-            game.userPlayer.addTargetable(newPlayer);
-        };
-        PlayerFactory.allAttacks = function (game, player) {
-            var melee = new Rwg.MeleeAttack();
-            melee.attackName = 'sword';
-            melee.damage = 20;
-            melee.range = 25;
-            melee.attackSpeed = 300;
-            melee.coolDown = 800;
-            melee.hitAreaWidth = 10;
-            melee.hitAreaHeight = 70;
-            melee.activeAttackKey = Phaser.KeyCode.Q;
-            melee.debug = false;
-            melee.framesForTheAnimation = 5;
-            melee.singleAnimation = false;
-            melee.provide(game, player, 0);
-            var ranged = new Rwg.RangedAttack();
-            ranged.attackName = 'bow';
-            ranged.bulletSpriteName = 'arrow';
-            ranged.damage = 8;
-            ranged.range = 500;
-            ranged.attackSpeed = 250;
-            ranged.coolDown = 400;
-            ranged.hitAreaWidth = 12;
-            ranged.hitAreaHeight = 35;
-            ranged.cadence = 2;
-            ranged.bulletSpeed = 750;
-            ranged.activeAttackKey = Phaser.KeyCode.E;
-            ranged.framesForTheAnimation = 3;
-            ranged.singleAnimation = false;
-            ranged.provide(game, player, 1);
-            //skills
-            var targetSkill = new Rwg.TargetSkill();
-            targetSkill.skillName = 'test';
-            targetSkill.range = 500;
-            targetSkill.castingSpeed = 2000;
-            targetSkill.coolDown = 800;
-            targetSkill.castKey = Phaser.KeyCode.X;
-            targetSkill.maxTargetsSelected = 2;
-            targetSkill.framesForTheAnimation = 3;
-            targetSkill.singleAnimation = true;
-            targetSkill.targetOnAlly = false;
-            targetSkill.effect = function (targets) { console.log(targets); };
-            targetSkill.provide(game, player, 2);
-            var clickOnMapSkill = new Rwg.ClickOnMapSkill();
-            clickOnMapSkill.skillName = 'jump';
-            clickOnMapSkill.range = 600;
-            clickOnMapSkill.castingSpeed = 300;
-            clickOnMapSkill.coolDown = 500;
-            clickOnMapSkill.castKey = Phaser.KeyCode.C;
-            clickOnMapSkill.framesForTheAnimation = 4;
-            clickOnMapSkill.singleAnimation = true;
-            clickOnMapSkill.velocitySpeed = 1200;
-            // example of a jump skill
-            clickOnMapSkill.effect = function (message) {
-                this.x = message.x;
-                this.y = message.y;
-                var origin = new Phaser.Point(message.x, message.y);
-                var target = new Phaser.Point(message.targetX, message.targetY);
-                var distanceToTarget = Phaser.Point.distance(origin, target);
-                var range = distanceToTarget;
-                if (distanceToTarget > message.range) {
-                    range = message.range;
-                }
-                this.game.physics.arcade.moveToXY(this, message.targetX, message.targetY, message.velocitySpeed);
-                this.updateMethods['checKJumpDistance'] = function () {
-                    if (Phaser.Point.distance(this.position, origin) > range) {
-                        this.body.velocity.x = 0;
-                        this.body.velocity.y = 0;
-                        delete this.updateMethods['checKJumpDistance'];
-                    }
-                }.bind(this);
-            };
-            clickOnMapSkill.provide(game, player, 3);
-        };
-        return PlayerFactory;
-    }());
-    Rwg.PlayerFactory = PlayerFactory;
-})(Rwg || (Rwg = {}));
-var Rwg;
-(function (Rwg) {
-    var PlayersGroup = (function (_super) {
-        __extends(PlayersGroup, _super);
-        function PlayersGroup(game) {
-            _super.call(this, game);
-            this.game.physics.arcade.enable(this);
-            this.enableBody = true;
-        }
-        PlayersGroup.prototype.getPlayerById = function (playerId) {
-            for (var i = 0; i < this.hash.length; i++) {
-                if (playerId == this.hash[i].playerId) {
-                    return this.hash[i];
-                }
-            }
-            return null;
-        };
-        PlayersGroup.prototype.playerIdExists = function (playerId) {
-            for (var i = 0; i < this.hash.length; i++) {
-                if (playerId == this.hash[i].playerId) {
+        CharFactory.useSkillType = function (skillControls, skillType) {
+            for (var i = 0; i < skillControls.length; i++) {
+                if (skillControls[i].type == skillType) {
                     return true;
                 }
             }
-            return null;
+            return false;
         };
-        return PlayersGroup;
-    }(Phaser.Group));
-    Rwg.PlayersGroup = PlayersGroup;
+        CharFactory.addSkillAreaMethods = function (game, character) {
+            character.skillAreaTarget = game.add.sprite(80, 80, 'target');
+            character.skillAreaTarget.visible = false;
+            character.skillAreaTarget.anchor.set(0.5, 0.5);
+            character.skillAreaTarget.range = 0;
+            character.skillAreaTarget.active = false;
+            character.updateMethods['skillArePointer'] = function () {
+                if (this.skillAreaTarget.active) {
+                    var cursorPoint = new Phaser.Point(Math.floor(this.game.input.worldX), Math.floor(this.game.input.worldY));
+                    if (Phaser.Point.distance(cursorPoint, this.position) < character.skillAreaTarget.range) {
+                        this.skillAreaTarget.position = cursorPoint;
+                        this.skillAreaTarget.visible = true;
+                    }
+                    else {
+                        this.skillAreaTarget.visible = false;
+                    }
+                }
+            }.bind(character);
+        };
+        CharFactory.addTargetMethods = function (character) {
+            character.addTargetable = function (targetable) {
+                targetable.target = this.game.add.sprite(targetable.x, targetable.y, 'target');
+                targetable.target.position = targetable.position;
+                targetable.target.visible = false;
+                targetable.target.anchor.set(0.5, 0.5);
+                targetable.events.onInputOver.add(this.targetOver, this);
+                targetable.inputEnabled = true;
+            }.bind(character);
+            character.targetOver = function (targetedChar) {
+                if (this.targetsOver.length < this.maxTargetsSelected) {
+                    for (var i = 0; i < this.targetsOver.length; i++) {
+                        if (this.targetsOver[i].name == targetedChar.name) {
+                            return;
+                        }
+                    }
+                    if (this.skills[this.currentSelectedSkill].targetOnAlly) {
+                        if (targetedChar.team == this.team) {
+                            this.targetsOver.push(targetedChar);
+                            targetedChar.target.visible = true;
+                        }
+                    }
+                    else {
+                        if (targetedChar.team != this.team) {
+                            this.targetsOver.push(targetedChar);
+                            targetedChar.target.visible = true;
+                        }
+                    }
+                }
+            }.bind(character);
+        };
+        CharFactory.addSendDamageUpdateMethod = function (character) {
+            character.sendDamageUpdate = function (hittedBy, damage) {
+                // updates the hitted stack for calculating the assists
+                var now = this.game.time.now;
+                this.hittedStack.push({ name: hittedBy, time: now });
+                var killed = false;
+                var assist = [];
+                if ((this.currentHP - damage) < 0) {
+                    this.currentHP = this.maxHP;
+                    this.killed = true;
+                    // if killed create a new list of assists players
+                    for (var i = 0; i < this.hittedStack.length; i++) {
+                        if (now - this.hittedStack[i].time > 10000) {
+                            if (this.hittedStack[i].name != hittedBy) {
+                                assist.push(this.hittedStack[i].name);
+                            }
+                        }
+                    }
+                }
+                else {
+                    this.currentHP -= damage;
+                }
+                var message = {
+                    type: Rwg.MessageType.DAMAGE,
+                    name: this.name,
+                    hittedBy: hittedBy,
+                    killed: this.killed,
+                    currentHP: this.currentHP,
+                    assist: assist
+                };
+                this.game.ws.send(message);
+            }.bind(character);
+        };
+        /*
+         *
+         * VALIDATION SECTION
+         *
+         */
+        CharFactory.checkFrames = function (game, atlasName, framesPerMovement) {
+            var baseFrames = ['standDown.png', 'standUp.png', 'standLeft.png', 'standRight.png'];
+            for (var i = 1; i <= framesPerMovement; i++) {
+                baseFrames.push('moveRight' + i + '.png');
+                baseFrames.push('moveLeft' + i + '.png');
+                baseFrames.push('moveUp' + i + '.png');
+                baseFrames.push('moveDown' + i + '.png');
+            }
+            var missingFrames = [];
+            for (var i = 0; i < baseFrames.length; i++) {
+                if (!game.cache.getFrameByName(atlasName, baseFrames[i])) {
+                    missingFrames.push(atlasName + '/' + baseFrames[i]);
+                }
+            }
+            if (missingFrames.length > 0) {
+                throw new Error('Error creating character - missing frames [' + missingFrames + ']');
+            }
+        };
+        return CharFactory;
+    }());
+    Rwg.CharFactory = CharFactory;
+})(Rwg || (Rwg = {}));
+var Rwg;
+(function (Rwg) {
+    var SkillContainer = (function () {
+        function SkillContainer(game) {
+            this.game = game;
+            this.player = game.state.getCurrentState().player;
+            this.skillContainer = this.game.add.group();
+            this.x = Math.floor(this.game.width / 2) - 111;
+            this.y = this.game.height - 44;
+            this.skillIcons = {};
+            var index = this.drawSkillIcons(this.player.attacks, 0);
+            this.drawSkillIcons(this.player.skills, index);
+            this.drawSkillBarAndSelectedSkillTarget();
+            this.drawCastingBar();
+            this.addChangeTargetWhenSkillSelected();
+            this.addCoolDownAnimation();
+            this.addChangeActivationKeyMethod();
+        }
+        SkillContainer.prototype.drawSkillIcons = function (skillsOrAttacks, startIndex) {
+            var i = startIndex;
+            for (var key in skillsOrAttacks) {
+                // only if skill has controles
+                if (skillsOrAttacks[key].select != undefined) {
+                    var x = this.x + 6;
+                    var y = this.y + 6;
+                    if (i > 0) {
+                        x += (32 + 4) * i;
+                    }
+                    this.skillIcons[key] = this.skillContainer.create(x, y, 'uiAtlas', skillsOrAttacks[key].icon);
+                    this.skillIcons[key].coolDownCover = this.drawSkillCoolDownCovers(x, y);
+                    i++;
+                }
+            }
+            return i;
+        };
+        SkillContainer.prototype.drawSkillCoolDownCovers = function (x, y) {
+            var clearCover = this.game.add.graphics(x, y);
+            clearCover.alpha = 0.5;
+            clearCover.beginFill(0xffffff);
+            clearCover.drawRect(0, 0, 32, 32);
+            clearCover.visible = false;
+            var cover = this.game.add.graphics(x + 16, y + 16);
+            cover.visible = false;
+            cover.alpha = 0.9;
+            cover.beginFill(0x000000);
+            cover.arc(0, 0, 24, this.game.math.degToRad(15), this.game.math.degToRad(360), true);
+            cover.endFill();
+            var coverMask = this.game.add.graphics(x, y);
+            coverMask.beginFill(0xffffff);
+            coverMask.drawRect(0, 0, 32, 32);
+            cover.mask = coverMask;
+            this.skillContainer.addChild(clearCover);
+            this.skillContainer.addChild(cover);
+            this.skillContainer.addChild(coverMask);
+            return { cover: cover, clearCover: clearCover };
+        };
+        SkillContainer.prototype.drawSkillBarAndSelectedSkillTarget = function () {
+            this.skillContainer.create(this.x, this.y, 'uiAtlas', 'emptySkillContainer.png');
+            this.selectedSkillMarginSprite = this.skillContainer.create(this.x, this.y, 'uiAtlas', 'selectedSkill.png');
+            this.selectedSkillMarginSprite.visible = false;
+        };
+        SkillContainer.prototype.drawCastingBar = function () {
+            var x = Math.floor(this.game.width / 2) - 165;
+            var y = Math.floor(this.game.height * 0.9) - 8;
+            this.castingBarContent = this.game.add.tileSprite(x + 3, y + 3, 325, 11, 'uiAtlas', 'cast.png');
+            this.skillContainer.addChild(this.castingBarContent);
+            this.castingBarContent.visible = false;
+            this.castingBar = this.skillContainer.create(x, y, 'uiAtlas', 'emptyBar.png');
+            this.castingBar.visible = false;
+        };
+        SkillContainer.prototype.addChangeTargetWhenSkillSelected = function () {
+            var _loop_1 = function(key) {
+                var selectedSkillMarginSprite = this_1.selectedSkillMarginSprite;
+                var x = this_1.skillIcons[key].x;
+                var y = this_1.skillIcons[key].y;
+                var skill = null;
+                if (this_1.player.attacks[key]) {
+                    skill = this_1.player.attacks[key];
+                }
+                else if (this_1.player.skills[key]) {
+                    skill = this_1.player.skills[key];
+                }
+                var castingBar = this_1.castingBar;
+                var oldSkillSelectedFunction = skill.select;
+                var setCurrentSkillInSkillBar = function (skill) {
+                    this.currentSkillInSkillBar = skill;
+                }.bind(this_1);
+                var newSkillSelectedFunction = function () {
+                    if (!castingBar.visible) {
+                        setCurrentSkillInSkillBar(skill); // callback to select the currentSkillInSkillBar
+                        oldSkillSelectedFunction();
+                        selectedSkillMarginSprite.x = x;
+                        selectedSkillMarginSprite.y = y;
+                        selectedSkillMarginSprite.visible = true;
+                    }
+                };
+                skill.select = newSkillSelectedFunction.bind(this_1.player);
+                var activationKey = this_1.game.input.keyboard.addKey(skill.activationKey);
+                activationKey.onDown.add(skill.select, this_1.player);
+                // adds the char label to the skill
+                var xCharPos = this_1.skillIcons[key].x + 2;
+                var yCharPos = this_1.skillIcons[key].y;
+                var keyLabel = this_1.game.add.text(xCharPos, yCharPos, String.fromCharCode(skill.activationKey), { font: "bold 12px Arial", fill: "#ffffff" });
+                keyLabel.stroke = '#000000';
+                keyLabel.strokeThickness = 4;
+                this_1.skillContainer.add(keyLabel);
+                this_1.skillIcons[key].keyLabel = keyLabel;
+            };
+            var this_1 = this;
+            for (var key in this.skillIcons) {
+                _loop_1(key);
+            }
+        };
+        SkillContainer.prototype.changeSkillKey = function (char) {
+            if (this.currentSkillInSkillBar) {
+                var activationKey = this.game.input.keyboard.addKey(this.currentSkillInSkillBar.activationKey);
+                activationKey.onDown.removeAll();
+                this.currentSkillInSkillBar.activationKey = char;
+                activationKey = this.game.input.keyboard.addKey(this.currentSkillInSkillBar.activationKey);
+                activationKey.onDown.add(this.currentSkillInSkillBar.select.bind(this.player), this.player);
+                // adds the char label to the skill
+                this.skillIcons[this.currentSkillInSkillBar.name].keyLabel.text = String.fromCharCode(char);
+            }
+        };
+        SkillContainer.prototype.addChangeActivationKeyMethod = function () {
+            var forbiden = [Phaser.KeyCode.A, Phaser.KeyCode.W, Phaser.KeyCode.S, Phaser.KeyCode.D, Phaser.KeyCode.L];
+            var l = this.game.input.keyboard.addKey(Phaser.KeyCode.L);
+            l.onHoldCallback = function () {
+                if (forbiden.indexOf(this.game.input.keyboard.event.which) == -1) {
+                    this.changeSkillKey(this.game.input.keyboard.event.which);
+                }
+            }.bind(this);
+        };
+        SkillContainer.prototype.addCoolDownAnimation = function () {
+            var _loop_2 = function(key) {
+                var skill = null;
+                if (this_2.player.attacks[key]) {
+                    skill = this_2.player.attacks[key];
+                }
+                else if (this_2.player.skills[key]) {
+                    skill = this_2.player.skills[key];
+                }
+                var x = this_2.skillIcons[key].x;
+                var y = this_2.skillIcons[key].y;
+                var coolDownCover = this_2.skillIcons[key].coolDownCover;
+                // for the casting bar
+                var castingBar = this_2.castingBar;
+                var castingBarContent = this_2.castingBarContent;
+                skill.additionalOnTriggerCallBack = function (actionTime) {
+                    var timer = this.game.time.create(false);
+                    var elapsed = 0;
+                    var angle = 0;
+                    var width = 0;
+                    coolDownCover.cover.visible = true;
+                    coolDownCover.clearCover.visible = true;
+                    // if requieres casting bar
+                    if (skill.castingSpeed) {
+                        castingBarContent.width = 0;
+                        castingBarContent.visible = true;
+                        castingBar.visible = true;
+                    }
+                    timer.loop(50, function () {
+                        elapsed += 50;
+                        // for the skill icon
+                        angle = Math.floor((elapsed * 360) / skill.coolDown);
+                        coolDownCover.cover.clear();
+                        coolDownCover.cover.beginFill(0x000000);
+                        coolDownCover.cover.arc(0, 0, 24, this.game.math.degToRad(0), this.game.math.degToRad(angle), true);
+                        coolDownCover.cover.endFill();
+                        if (elapsed > skill.coolDown && coolDownCover.cover.visible) {
+                            coolDownCover.cover.clear();
+                            coolDownCover.cover.beginFill(0x000000);
+                            coolDownCover.cover.arc(0, 0, 24, this.game.math.degToRad(0), this.game.math.degToRad(angle), true);
+                            coolDownCover.cover.endFill();
+                            coolDownCover.cover.visible = false;
+                            coolDownCover.clearCover.visible = false;
+                        }
+                        // for the cast bar
+                        if (skill.castingSpeed) {
+                            castingBarContent.width = Math.floor((elapsed * 325) / skill.castingSpeed);
+                            if (elapsed > skill.castingSpeed && castingBar.visible) {
+                                castingBarContent.width = 0;
+                                castingBarContent.visible = false;
+                                castingBar.visible = false;
+                            }
+                        }
+                        if (!coolDownCover.cover.visible && !castingBarContent.visible) {
+                            timer.stop();
+                        }
+                    }, this);
+                    timer.start();
+                }.bind(this_2.player);
+            };
+            var this_2 = this;
+            for (var key in this.skillIcons) {
+                _loop_2(key);
+            }
+        };
+        return SkillContainer;
+    }());
+    Rwg.SkillContainer = SkillContainer;
 })(Rwg || (Rwg = {}));
 var Rwg;
 (function (Rwg) {
     var LeaderBoard = (function () {
-        function LeaderBoard(game) {
+        function LeaderBoard(game, initPlayersScore) {
             this.game = game;
-            this.players = {};
-            this.container = game.add.graphics(600, 10);
-            this.container.beginFill(0x000000);
-            this.container.alpha = 0.7;
-            this.container.drawRect(0, 0, 190, 500);
-            this.container.fixedToCamera = true;
-            this.style = { font: "16px Arial", fill: "#ffffff", align: "center" };
-            this.tittle = game.add.text(10, 10, 'PLAYERS:', this.style);
-            this.container.addChild(this.tittle);
-            this.players[game.userPlayer.playerId] = 0;
-            this.playerListText = [];
-            this.display();
+            this.board = this.game.add.group();
+            this.board.visible = false;
+            this.players = initPlayersScore;
+            this.displayLeaderBoard();
+            this.generateDisplayBoardMethod();
         }
+        LeaderBoard.prototype.displayLeaderBoard = function () {
+            this.sort();
+            this.board.removeAll();
+            this.drawBoard();
+        };
         LeaderBoard.prototype.addPlayer = function (player) {
-            this.players[player] = 0;
+            this.players.push({ name: player.name, character: player.character, kill: 0, assist: 0, death: 0, score: 0 });
+            this.sort();
+            this.board.removeAll();
+            this.drawBoard();
         };
-        LeaderBoard.prototype.updatePlayerScore = function (player, score) {
-            this.players[player]++;
+        LeaderBoard.prototype.exists = function (playerName) {
+            for (var i = this.players.length - 1; i >= 0; i--) {
+                if (this.players[i].name == playerName) {
+                    return true;
+                }
+            }
+            ;
+            return false;
         };
-        LeaderBoard.prototype.display = function () {
-            for (var i = 0; i < this.playerListText.length; i++) {
-                this.container.removeChild(this.playerListText[i]);
+        LeaderBoard.prototype.updateBoardInfoKill = function (name, kill) {
+            var found = false;
+            for (var i = 0; i < this.players.length; i++) {
+                if (this.players[i].name == name) {
+                    this.players[i].kill = kill;
+                    this.players[i].score = (this.players[i].kill * 10) + (this.players[i].assist * 0.5); // + (this.players[i].death*(-1));
+                    found = true;
+                }
             }
-            this.playerListText = [];
-            var temp = [];
-            for (a in this.players) {
-                temp.push([a, this.players[a]]);
+            this.sort();
+            this.board.removeAll();
+            this.drawBoard();
+        };
+        LeaderBoard.prototype.updateBoardInfoAssist = function (name, assist) {
+            var found = false;
+            for (var i = 0; i < this.players.length; i++) {
+                if (this.players[i].name == name) {
+                    this.players[i].assist = assist;
+                    this.players[i].score = (this.players[i].kill * 10) + (this.players[i].assist * 5); //+ (this.players[i].death*(-1));
+                    found = true;
+                }
             }
-            temp.sort(function (a, b) { return a[1] - b[1]; });
-            temp.reverse();
+            this.sort();
+            this.board.removeAll();
+            this.drawBoard();
+        };
+        LeaderBoard.prototype.updateBoardInfoDeath = function (name, death) {
+            var found = false;
+            for (var i = 0; i < this.players.length; i++) {
+                if (this.players[i].name == name) {
+                    this.players[i].death = death;
+                    this.players[i].score = (this.players[i].kill * 10) + (this.players[i].assist * 5); //+ (this.players[i].death*(-1));
+                    found = true;
+                }
+            }
+            this.sort();
+            this.board.removeAll();
+            this.drawBoard();
+        };
+        LeaderBoard.prototype.generateDisplayBoardMethod = function () {
+            var shift = this.game.input.keyboard.addKey(Phaser.KeyCode.SHIFT);
+            shift.onDown.add(function () {
+                this.board.visible = true;
+            }, this);
+            shift.onUp.add(function () {
+                this.board.visible = false;
+            }, this);
+        };
+        LeaderBoard.prototype.drawBoard = function () {
+            var x = 540;
             var y = 20;
-            for (var i = 0; i < temp.length; i++) {
-                var line = this.game.add.text(10, 40 + i * y, (i + 1) + '. ' + temp[i][0] + " : " + temp[i][1], this.style);
-                this.playerListText.push(line);
-                this.container.addChild(line);
+            // top leader board sprite
+            this.board.create(x, y, 'uiAtlas', 'leaderBoardTop.png');
+            y += 6;
+            // leader board content
+            var height = this.getLeaderBoardContent();
+            this.boardContainer = this.game.add.tileSprite(x, y, 235, height, 'uiAtlas', 'leaderBoardSegment.png');
+            this.board.add(this.boardContainer);
+            // leader board tile
+            var title = this.game.add.text(x + 20, y + 2, 'Leader Board', { font: "bold 16px Arial", fill: "#ffffff" });
+            title.stroke = '#000000';
+            title.strokeThickness = 4;
+            this.board.add(title);
+            y += title.height + 4; //33 px
+            // content
+            for (var i = 0; i < this.players.length; i++) {
+                y += this.addLine((i + 1) + '. ' + this.players[i].name, this.players[i], x, y);
             }
+            // leaderBoardBottom
+            this.board.create(x, height + 26, 'uiAtlas', 'leaderBoardBottom.png');
+        };
+        LeaderBoard.prototype.addLine = function (name, player, x, y) {
+            var line = this.game.add.text(x + 20, y, name + ' : ' + player.kill + '/' + player.assist + '/' + player.death + ' score: ' + player.score, { font: '14px Arial', fill: "#ffffff" });
+            line.stroke = '#000000';
+            line.strokeThickness = 3;
+            this.board.add(line);
+            return line.height + 1; // 26 px
+        };
+        LeaderBoard.prototype.getLeaderBoardContent = function () {
+            var height = 33;
+            height = 26 * (this.players.length + 1);
+            return height;
+        };
+        LeaderBoard.prototype.sort = function () {
+            this.players.sort(function (a, b) {
+                return b.score - a.score;
+            });
         };
         return LeaderBoard;
     }());
     Rwg.LeaderBoard = LeaderBoard;
 })(Rwg || (Rwg = {}));
-/// <reference path="../players/PlayerFactory.ts" />
-/// <reference path="../players/PlayersGroup.ts" />
-/// <reference path="../ui/LeaderBoard.ts" />
+/// <reference path="SkillContainer.ts" />
+/// <reference path="LeaderBoard.ts" />
 var Rwg;
 (function (Rwg) {
-    var Arena1 = (function (_super) {
-        __extends(Arena1, _super);
-        function Arena1() {
+    var Ui = (function () {
+        function Ui(game, initPlayersScore) {
+            this.game = game;
+            this.ui = this.game.add.group();
+            this.ui.fixedToCamera = true;
+            this.skillContainer = this.ui.addChild(new Rwg.SkillContainer(game).skillContainer);
+            this.leaderBoard = new Rwg.LeaderBoard(game, initPlayersScore);
+            this.ui.addChild(this.leaderBoard.board);
+            this.createHealthBars();
+        }
+        Ui.prototype.createHealthBars = function () {
+            this.ui.create(20, 10, 'uiAtlas', 'hartIcon.png');
+            // HP BAR
+            var hpBarContent = this.game.add.tileSprite(63, 8, 325, 11, 'uiAtlas', 'hp.png');
+            this.ui.addChild(hpBarContent);
+            var hpBar = this.ui.create(60, 5, 'uiAtlas', 'emptyBar.png');
+            this.game.world.bringToTop(hpBar);
+            hpBar.currentHP = -1;
+            var state = this.game.state.getCurrentState();
+            state.player.updateMethods['updateLifeBar'] = function () {
+                if (hpBar.currentHP != this.currentHP) {
+                    var width = (this.currentHP * 327) / this.maxHP;
+                    hpBarContent.width = width;
+                    hpBar.currentHP = this.currentHP;
+                }
+            }.bind(state.player);
+            // MP BAR
+            var mpBarContent = this.game.add.tileSprite(63, 28, 325, 11, 'uiAtlas', 'mp.png');
+            this.ui.addChild(mpBarContent);
+            var mpBar = this.ui.create(60, 25, 'uiAtlas', 'emptyBar.png');
+        };
+        return Ui;
+    }());
+    Rwg.Ui = Ui;
+})(Rwg || (Rwg = {}));
+/// <reference path="../base/BaseChar.ts" />
+/// <reference path="../enums/CollisionCategory.ts" />
+var Rwg;
+(function (Rwg) {
+    var StageCollisionFactory = (function () {
+        function StageCollisionFactory(args) {
+        }
+        StageCollisionFactory.prototype.getCollisionObjects = function (game, objectsList, debug) {
+            var _loop_3 = function(i) {
+                //creates the obstacules
+                var object = objectsList[i];
+                var sprite = game.add.sprite(object.x, object.y);
+                game.physics.box2d.enable(sprite);
+                var vertices = [];
+                for (var j = 1; j < object.polyline.length; j++) {
+                    vertices.push(object.polyline[j][0]);
+                    vertices.push(object.polyline[j][1]);
+                }
+                sprite.body.setPolygon(vertices);
+                sprite.body.static = true;
+                sprite.body.setCollisionCategory(Rwg.CollisionCategory.WALL);
+                // render methods
+                if (debug) {
+                    game.renderMethods['debugTheObject' + object.name] = function () {
+                        game.debug.body(sprite);
+                    }.bind(this_3);
+                }
+            };
+            var this_3 = this;
+            for (var i = 0; i < objectsList.length; i++) {
+                _loop_3(i);
+            }
+        };
+        return StageCollisionFactory;
+    }());
+    Rwg.StageCollisionFactory = StageCollisionFactory;
+})(Rwg || (Rwg = {}));
+/// <reference path="../core/super/BaseChar.ts" />
+/// <reference path="../core/factories/CharFactory.ts" />
+/// <reference path="../characters/CharacterSelecter.ts" />
+/// <reference path="../ui/Ui.ts" />
+/// <reference path="../core/enums/MessageType.ts" />
+/// <reference path="../core/factories/StageCollisionFactory.ts" />
+var Rwg;
+(function (Rwg) {
+    var ForestTown = (function (_super) {
+        __extends(ForestTown, _super);
+        function ForestTown() {
             _super.apply(this, arguments);
         }
-        Arena1.prototype.init = function (initParam) {
-            // creates the user player
-            Rwg.PlayerFactory.createUserPlayer(this.game, initParam);
-        };
-        Arena1.prototype.create = function () {
+        ForestTown.prototype.init = function (initParam) {
+            //disable the game block in background
             this.game.stage.disableVisibilityChange = true;
-            // scenario setings
-            this.game.world.setBounds(0, 0, 1920, 1920);
-            this.background = this.game.add.tileSprite(0, 0, 1920, 1920, 'background');
-            this.background.sendToBack();
-            // initializes the forPlayers group for this state
-            this.game.foePlayers = new Rwg.PlayersGroup(this.game);
-            this.game.allyPlayers = new Rwg.PlayersGroup(this.game);
-            // hoock websocket methods
-            this.game.ws.updatePlayerPosition = this.updatePlayerPosition.bind(this);
-            this.game.ws.updatePlayerVelocity = this.updatePlayerVelocity.bind(this);
+            // crates the players group
+            this.playersGroup = this.game.add.group();
+            this.players = {};
+            // creates the player character
+            var charArgs = Rwg.CharacterSelecter.getCharacterArgs(initParam.character);
+            charArgs.base.name = initParam.name;
+            charArgs.base.attackControls = charArgs.attackControls;
+            charArgs.base.skillControls = charArgs.skillControls;
+            charArgs.base.controlable = true;
+            charArgs.base.team = initParam.team;
+            // creates the new character base on the arguments
+            this.player = Rwg.CharFactory.getChar(charArgs.base, this.game);
+            this.player.character = initParam.character;
+            this.playersGroup.add(this.player);
+            // setUp the collisions for the user player
+            this.ui = new Rwg.Ui(this.game, initParam.playerScores);
+        };
+        ForestTown.prototype.create = function () {
+            // camera follow
+            this.game.camera.follow(this.player);
+            this.game.ws.newPlayer = this.newPlayer.bind(this);
+            this.game.ws.move = this.move.bind(this);
+            this.game.ws.velocity = this.velocity.bind(this);
+            this.game.ws.playerLeft = this.playerLeft.bind(this);
             this.game.ws.attack = this.attack.bind(this);
-            this.game.ws.playerKilled = this.playerKilled.bind(this);
-            this.game.ws.removePlayer = this.removePlayer.bind(this);
-            this.game.ws.skillThrown = this.skillThrown.bind(this);
-            this.game.ws.takeDamage = this.takeDamage.bind(this);
-            // set the camara
-            this.game.camera.follow(this.game.userPlayer);
-            // for debugin
-            this.gameTime = 0;
-            //leaderboard
-            this.leaderboard = new Rwg.LeaderBoard(this.game);
-        };
-        Arena1.prototype.updatePlayerPosition = function (message) {
-            if (message.playerId == this.game.userPlayer.playerId) {
-                return;
-            }
-            var player = this.getPlayer(message);
-            if (player == null) {
-                Rwg.PlayerFactory.createPlayer(this.game, message);
-                this.leaderboard.addPlayer(message.playerId);
-                this.leaderboard.display();
-                this.reorderWeaponSprites();
-            }
-            else {
-                player.updatePlayerPosition(message.x, message.y);
-            }
-        };
-        Arena1.prototype.updatePlayerVelocity = function (message) {
-            if (message.playerId == this.game.userPlayer.playerId) {
-                return;
-            }
-            var player = this.getPlayer(message);
-            if (player == null) {
-                Rwg.PlayerFactory.createPlayer(this.game, message);
-                this.leaderboard.addPlayer(message.playerId);
-                this.leaderboard.display();
-                this.reorderWeaponSprites();
+            this.game.ws.skill = this.skill.bind(this);
+            this.game.ws.damage = this.damage.bind(this);
+            this.game.ws.gameOver = this.gameOver.bind(this);
+            // map setings
+            this.map = this.game.add.tilemap('forestTownJSON');
+            this.map.addTilesetImage('forestTown', 'forestTownImage');
+            var background = this.map.createLayer('background');
+            var foreground = this.map.createLayer('foreground');
+            var top = this.map.createLayer('top');
+            background.resizeWorld();
+            foreground.sendToBack();
+            background.sendToBack();
+            this.game.physics.box2d.setBoundsToWorld();
+            (new Rwg.StageCollisionFactory()).getCollisionObjects(this.game, this.map.collision.Collision, false);
+            // set the respown positions for each team
+            var respawnGroup = this.game.add.group();
+            this.map.createFromObjects('Respawns', 'team_zero', null, null, false, false, respawnGroup);
+            this.map.createFromObjects('Respawns', 'team_one', null, null, false, false, respawnGroup);
+            this.respawns = {};
+            this.respawns.team_zero = respawnGroup.getChildAt(0).position;
+            this.respawns.team_one = respawnGroup.getChildAt(1).position;
+            if (this.player.team == '1') {
+                this.player.moveCharacterToXY(this.respawns.team_one.x, this.respawns.team_one.y);
+                this.player.respawn = this.respawns.team_one;
             }
             else {
-                player.updatePlayerVelocity(message.velocityX, message.velocityY, message.x, message.y);
+                this.player.moveCharacterToXY(this.respawns.team_zero.x, this.respawns.team_zero.y);
+                this.player.respawn = this.respawns.team_zero;
             }
         };
-        Arena1.prototype.playerKilled = function (message) {
-            this.leaderboard.updatePlayerScore(message.killedBy);
-            this.leaderboard.display();
-            // if it is my own killed message I do nothing
-            if (message.playerId == this.game.userPlayer.playerId) {
-                return;
-            }
-            // if it was my kill
-            if (message.killedBy == this.game.userPlayer.playerId) {
-                this.game.userPlayer.addAKill();
-            }
+        ForestTown.prototype.render = function () {
+            this.game.world.bringToTop(this.ui.ui);
+            this.playersGroup.sort('y', Phaser.Group.SORT_ASCENDING);
         };
-        // if recieves attack message from server perform the attack
-        Arena1.prototype.attack = function (message) {
-            if (message.playerId == this.game.userPlayer.playerId) {
-                return;
-            }
-            var player = this.getPlayer(message);
-            if (player != null) {
-                player.attacks[message.attackName].attack(message);
-            }
+        // need to whipe all the stage objects
+        ForestTown.prototype.shutdown = function () {
+            this.game.ws.newPlayer = function () { };
+            this.game.ws.move = function () { };
+            this.game.ws.velocity = function () { };
+            this.game.ws.playerLeft = function () { };
+            this.game.ws.attack = function () { };
+            this.game.ws.skill = function () { };
+            this.game.ws.damage = function () { };
+            this.game.ws.gameOver = function () { };
+            this.player = null;
+            this.ui = null;
         };
-        Arena1.prototype.skillThrown = function (message) {
-            if (message.playerId == this.game.userPlayer.playerId) {
-                return;
-            }
-            var player = this.getPlayer(message);
-            if (player != null) {
-                player.skills[message.skillName].skillThrown(message);
-            }
-        };
-        Arena1.prototype.takeDamage = function (message) {
-            if (message.playerId == this.game.userPlayer.playerId) {
-                return;
-            }
-            var player = this.getPlayer(message);
-            if (player != null) {
-                player.recieveDamage(message);
-            }
-        };
-        // if recieves player leave from server updates the player list
-        Arena1.prototype.removePlayer = function (message) {
-            var foe = this.game.foePlayers.getPlayerById(message.playerId);
-            if (foe != null) {
-                foe.destroyPlayer();
-                this.game.foePlayers.remove(foe);
-            }
-        };
-        /*
-         *
-         * Debug methods
-         *
-         */
-        Arena1.prototype.update = function () {
-            if (this.game.time.now > this.gameTime) {
-                this.game.debug.text('download : ' + this.game.ws.messagesByteDataReceived / 1000 + ' (Kb/s)', 32, 20);
-                this.game.debug.text('upload : ' + this.game.ws.messagesByteDataSend / 1000 + " (Kb/s)", 32, 40);
-                this.game.ws.messagesByteDataReceived = 0;
-                this.game.ws.messagesByteDataSend = 0;
-                this.gameTime = this.game.time.now + 1000;
-            }
-        };
-        /*
-         *
-         *  UTILITY METHODS
-         *
-         */
-        Arena1.prototype.getPlayer = function (data) {
-            var player = null;
-            if (data.team == this.game.userPlayer.team) {
-                player = this.game.allyPlayers.getPlayerById(data.playerId);
+        ForestTown.prototype.newPlayer = function (message) {
+            // creates the player character
+            var charArgs = Rwg.CharacterSelecter.getCharacterArgs(message.character);
+            charArgs.base.name = message.name;
+            charArgs.base.team = message.team;
+            charArgs.base.targetable = true;
+            // creates the new character base on the arguments
+            var newPlayer = Rwg.CharFactory.getChar(charArgs.base, this.game);
+            newPlayer.character = message.character;
+            this.playersGroup.add(newPlayer);
+            this.players[message.name] = newPlayer;
+            // init position
+            var initPos = { x: 0, y: 0 };
+            // sets the respawn
+            if (newPlayer.team) {
+                initPos.x = this.respawns.team_one.x;
+                initPos.y = this.respawns.team_one.y;
+                newPlayer.respawn = this.respawns.team_one;
             }
             else {
-                player = this.game.foePlayers.getPlayerById(data.playerId);
+                initPos.x = this.respawns.team_zero.x;
+                initPos.y = this.respawns.team_zero.y;
+                newPlayer.respawn = this.respawns.team_zero;
             }
-            return player;
+            // set the init pos if the player already existed
+            if (message.x != 0 || message.y != 0) {
+                initPos = { x: message.x, y: message.y };
+            }
+            newPlayer.moveCharacterToXY(initPos.x, initPos.y);
+            // updates the UI
+            if (!this.ui.leaderBoard.exists(message.name)) {
+                this.ui.leaderBoard.addPlayer(newPlayer);
+            }
+            this.ui.leaderBoard.updateBoardInfoKill(message.name, message.kill);
+            this.ui.leaderBoard.updateBoardInfoAssist(message.name, message.assist);
+            this.ui.leaderBoard.updateBoardInfoDeath(message.name, message.death);
         };
-        Arena1.prototype.reorderWeaponSprites = function () {
-            this.background.sendToBack();
-            this.game.foePlayers.forEach(function (member) {
-                this.game.world.bringToTop(member.target);
-            }, this, true);
-            this.game.foePlayers.forEach(function (member) {
-                this.game.world.bringToTop(member.key);
-            }, this, true);
-            this.game.world.bringToTop(this.game.userPlayer);
-            this.game.foePlayers.forEach(function (member) {
-                if (member.weaponSprite != null) {
-                    this.game.world.bringToTop(member.weaponSprite);
+        // this process is thought if the browser windows is off of focuss and there are a new loggin 
+        // that was not caught by the client
+        ForestTown.prototype.requestPlayerInfo = function (name) {
+            this.game.ws.send({
+                type: Rwg.MessageType.REQUEST_PLAYER_INFO,
+                name: name
+            });
+        };
+        ForestTown.prototype.move = function (message) {
+            if (this.player.name == message.name) {
+                return;
+            }
+            if (this.players[message.name]) {
+                this.players[message.name].moveCharacterToXY(message.x, message.y);
+            }
+            else {
+                this.requestPlayerInfo(message.name);
+            }
+        };
+        ForestTown.prototype.velocity = function (message) {
+            if (this.player.name == message.name) {
+                return;
+            }
+            if (this.players[message.name]) {
+                this.players[message.name].setVelocity(message.x, message.y, message.velocityBitMask);
+            }
+        };
+        ForestTown.prototype.playerLeft = function (message) {
+            if (this.players[message.name]) {
+                this.players[message.name].destroy();
+            }
+        };
+        ForestTown.prototype.attack = function (message) {
+            if (this.player.name == message.name) {
+                return;
+            }
+            if (this.players[message.name]) {
+                this.players[message.name].attacks[message.attackName].attack(message);
+            }
+        };
+        ForestTown.prototype.skill = function (message) {
+            if (this.player.name == message.name) {
+                return;
+            }
+            if (this.players[message.name]) {
+                this.players[message.name].skills[message.skillName].skillThrown(message);
+            }
+        };
+        ForestTown.prototype.damage = function (message) {
+            // update leader board
+            if (message.killed) {
+                this.ui.leaderBoard.updateBoardInfoKill(message.hittedBy, message.kill);
+                if (!message.assist) {
+                    message.assist = [];
                 }
-            }, this, true);
-            if (this.game.userPlayer.weaponSprite != null) {
-                this.game.world.bringToTop(this.game.userPlayer.weaponSprite);
+                ;
+                for (var i = 0; i < message.assist.length; i++) {
+                    this.ui.leaderBoard.updateBoardInfoAssist(message.assist[i].name, message.assist[i].assist);
+                }
+                ;
+                this.ui.leaderBoard.updateBoardInfoDeath(message.name, message.death);
             }
-            this.game.foePlayers.forEach(function (member) {
-                this.game.world.bringToTop(member.playerNameLabel);
-            }, this, true);
+            // can be any animation or somethig
+            if (this.player.name == message.hittedBy && message.killed) {
+                console.log('killed!!');
+            }
+            if (this.players[message.name]) {
+                this.players[message.name].damage(message);
+            }
         };
-        return Arena1;
+        ForestTown.prototype.gameOver = function (message) {
+            // updates the leader board
+            if (!message.assist) {
+                message.assist = [];
+            }
+            ;
+            this.ui.leaderBoard.updateBoardInfoKill(message.winner, message.kill);
+            for (var i = 0; i < message.assist.length; i++) {
+                this.ui.leaderBoard.updateBoardInfoAssist(message.assist[i].name, message.assist[i].assist);
+            }
+            ;
+            this.ui.leaderBoard.updateBoardInfoDeath(message.name, message.death);
+            var player = this.player;
+            var leaderBoard = this.ui.leaderBoard.players;
+            this.game.state.clearCurrentState();
+            this.game.state.start('GameOver', true, false, {
+                arena: 'ForestTown',
+                player: player,
+                leaderBoard: leaderBoard,
+                winner: message.winner
+            });
+        };
+        return ForestTown;
     }(Phaser.State));
-    Rwg.Arena1 = Arena1;
+    Rwg.ForestTown = ForestTown;
 })(Rwg || (Rwg = {}));
 /// <reference path="../../libs/phaser.d.ts" />
-/// <reference path="states/StartScreen.ts" />
-/// <reference path="states/Arena1.ts" />
-/// <reference path="players/UserPlayer.ts" />
-/// <reference path="players/PlayerGroup.ts" />
+/// <reference path="states/Boot.ts" />
+/// <reference path="states/EnterName.ts" />
+/// <reference path="states/CharSelection.ts" />
+/// <reference path="states/ArenaSelection.ts" />
+/// <reference path="states/GameOver.ts" />
+/// <reference path="arenas/ForestTown.ts" />
 var Rwg;
 (function (Rwg) {
     var Game = (function (_super) {
@@ -1747,46 +2513,56 @@ var Rwg;
         function Game(ws) {
             _super.call(this, 800, 600, Phaser.AUTO, 'canvas-area');
             this.ws = ws;
-            this.state.add('StartScreen', Rwg.StartScreen, false);
-            this.state.add('Arena1', Rwg.Arena1, false);
-            this.state.start('StartScreen');
+            // flow
+            this.state.add('Boot', Rwg.Boot, false);
+            this.state.add('EnterName', Rwg.EnterName, false);
+            this.state.add('CharSelection', Rwg.CharSelection, false);
+            this.state.add('ArenaSelection', Rwg.ArenaSelection, false);
+            this.state.add('GameOver', Rwg.GameOver, false);
+            //arenas
+            this.state.add('ForestTown', Rwg.ForestTown, false);
+            this.state.start('Boot');
         }
         return Game;
     }(Phaser.Game));
     Rwg.Game = Game;
 })(Rwg || (Rwg = {}));
+/// <reference path="../core/enums/MessageType.ts" />
 var Rwg;
 (function (Rwg) {
     var WSConnection = (function () {
         function WSConnection(uri) {
-            this.init = function (message) {
+            this.continueToCharSelection = function (message) {
                 // empty method to be overwrite
             };
-            this.updatePlayerPosition = function (message) {
+            this.continueToArenaSelection = function (message) {
                 // empty method to be overwrite
             };
-            this.updatePlayerVelocity = function (message) {
+            this.initArena = function (message) {
                 // empty method to be overwrite
             };
-            this.removePlayer = function (message) {
+            this.newPlayer = function (message) {
                 // empty method to be overwrite
             };
-            this.requestEnter = function (message) {
+            this.move = function (message) {
+                // empty method to be overwrite
+            };
+            this.velocity = function (message) {
+                // empty method to be overwrite
+            };
+            this.playerLeft = function (message) {
                 // empty method to be overwrite
             };
             this.attack = function (message) {
                 // empty method to be overwrite
             };
-            this.playerKilled = function (message) {
+            this.skill = function (message) {
                 // empty method to be overwrite
             };
-            this.debug = function (message) {
+            this.damage = function (message) {
                 // empty method to be overwrite
             };
-            this.skillThrown = function (message) {
-                // empty method to be overwrite
-            };
-            this.takeDamage = function (message) {
+            this.gameOver = function (message) {
                 // empty method to be overwrite
             };
             this.uri = uri;
@@ -1801,35 +2577,44 @@ var Rwg;
             this.messagesByteDataReceived += this.lengthInUtf8Bytes(message.data);
             var message = JSON.parse(message.data);
             switch (message.type) {
-                case 'init':
-                    this.init(message);
+                case Rwg.MessageType.NAME_SELECTION:
+                    this.continueToCharSelection(message);
                     break;
-                case 'updatePlayerVelocity':
-                    this.updatePlayerVelocity(message);
+                case Rwg.MessageType.CHARACTER_SELECTION:
+                    this.continueToArenaSelection(message);
                     break;
-                case 'updatePlayerPosition':
-                    this.updatePlayerPosition(message);
+                case Rwg.MessageType.ARENA_SELECTION:
+                    this.initArena(message);
                     break;
-                case 'removePlayer':
-                    this.removePlayer(message);
+                case Rwg.MessageType.NEW_PLAYER:
+                    this.newPlayer(message);
                     break;
-                case 'requestEnter':
-                    this.requestEnter(message);
+                case Rwg.MessageType.VELOCITY:
+                    this.velocity(message);
                     break;
-                case 'attack':
+                case Rwg.MessageType.MOVE:
+                    this.move(message);
+                    break;
+                case Rwg.MessageType.PLAYER_LEFT:
+                    this.playerLeft(message);
+                    break;
+                case Rwg.MessageType.ATTACK:
                     this.attack(message);
                     break;
-                case 'playerKilled':
-                    this.playerKilled(message);
+                case Rwg.MessageType.DAMAGE:
+                    this.damage(message);
                     break;
-                case 'skillThrown':
-                    this.skillThrown(message);
+                case Rwg.MessageType.SKILL:
+                    this.skill(message);
                     break;
-                case 'takeDamage':
-                    this.takeDamage(message);
+                case Rwg.MessageType.GAME_OVER:
+                    this.gameOver(message);
                     break;
                 default:
-                    console.log('no type');
+                    console.log('no type ' + message.type + " ---> ");
+                    for (key in message) {
+                        console.log(key + " : " + message[key]);
+                    }
             }
         };
         WSConnection.prototype.send = function (message) {
@@ -1849,7 +2634,7 @@ var Rwg;
 /// <reference path="game/Game.ts" />
 /// <reference path="game/serverconn/WSConnection.ts" />
 window.onload = function () {
-    var ws = new Rwg.WSConnection('ws://201.239.178.103:1337');
+    var ws = new Rwg.WSConnection('ws://localhost:1337');
     ws.connect();
     var game = new Rwg.Game(ws);
 };

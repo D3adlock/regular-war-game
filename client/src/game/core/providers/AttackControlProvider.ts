@@ -9,12 +9,14 @@ module Rwg {
         private attackName:string;
         private coolDown:number;
         private activationKey:number;
+        private icon:string;
 
         constructor(args:any) {
             
             this.name = args.name;
             this.coolDown = args.coolDown;
             this.activationKey = args.activationKey;
+            this.icon = args.icon;
         }
 
         public provide(game: Phaser.Game, character: BaseChar) {
@@ -22,12 +24,9 @@ module Rwg {
             character.attacks[this.name].attackTime = 0;
             character.attacks[this.name].coolDown = this.coolDown;
             character.attacks[this.name].triggerAttack = this.getTriggerAttackMethod(this.name).bind(character);
-
-            let key = game.input.keyboard.addKey(this.activationKey);
-            key.onDown.add(this.getAttackSelectedMethod(this.name), character);
-
-            // add some callbacks to the animations for the controlled attack
-            character.animations.getAnimation(name);
+            character.attacks[this.name].icon = this.icon;
+            character.attacks[this.name].activationKey = this.activationKey;
+            character.attacks[this.name].select = this.getAttackSelectedMethod(this.name).bind(character);
         }
 
         private getTriggerAttackMethod(attackName:string) {
@@ -56,7 +55,6 @@ module Rwg {
                     ,this);
 
                     this.attacks[attackName].attack(message);
-
                     this.attacks[attackName].attackTime = this.game.time.now + this.attacks[attackName].coolDown;
                 }
             };
